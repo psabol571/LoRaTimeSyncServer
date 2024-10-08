@@ -2,3 +2,4 @@ Django==5.1.1
 grpcio
 psycopg
 chirpstack-api
+django-environ
