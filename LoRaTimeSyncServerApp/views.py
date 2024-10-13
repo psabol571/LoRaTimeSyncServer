@@ -40,7 +40,8 @@ def receive_uplink(request):
 
 @csrf_exempt
 def test_receive(request: WSGIRequest):
-    saveTimeCollection('test_dev_eui')
+    now = time.time_ns()
+    saveTimeCollection('test_dev_eui', now, now)
     return HttpResponse(json.dumps(request.POST))
 
 

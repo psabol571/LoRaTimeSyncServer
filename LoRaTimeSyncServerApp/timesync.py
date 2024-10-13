@@ -21,7 +21,7 @@ def initTimeSync(dev_eui, period):
     return now
 
 
-def saveTimeCollection(dev_eui, device_time=time.time_ns(), time_received=time.time_ns()):
+def saveTimeCollection(dev_eui, device_time, time_received):
     device = TimeSyncInit.objects.filter(dev_eui=dev_eui).last()
 
     time_diff = time_received - device.first_uplink_expected
@@ -50,9 +50,15 @@ def createModel(collections, first_received):
 
     return model
 
+
 def perform_sync(dev_eui):
+
     # Fetch TimeCollection data for the specified dev_eui
     collections = TimeCollection.objects.filter(dev_eui=dev_eui).order_by('time_received')
+
+    # MIN_N = 300
+    # if len(collections) < MIN_N:
+    #     return
 
     model = createModel(collections, collections[0].time_received)
 
