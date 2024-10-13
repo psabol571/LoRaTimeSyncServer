@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from google.protobuf.json_format import Parse
 # Create your views here.
 from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
-from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection
+from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync
 
 
 def unmarshal(body, pl):
@@ -56,4 +56,11 @@ def test_init(request: WSGIRequest):
         'ns': time.time_ns(),
     })
     return HttpResponse(resp)
+
+
+@csrf_exempt
+def test_sync(request: WSGIRequest):
+    perform_sync('test_dev_eui')
+
+    return HttpResponse('hi')
 

@@ -2,7 +2,10 @@ import time
 
 from django.utils import timezone
 from datetime import timedelta
-from .models import TimeSyncInit, TimeCollection
+from .models import TimeSyncInit, TimeCollection, TimeSyncModels
+from sklearn.linear_model import LinearRegression
+import numpy as np
+
 
 def initTimeSync(dev_eui, period):
     now = time.time_ns()
@@ -34,4 +37,33 @@ def saveTimeCollection(dev_eui, device_time=time.time_ns(), time_received=time.t
     )
     
     return time_collection
+
+
+def createModel(collections, first_received):
+    # Prepare data for linear regression
+    X = np.array([c.time_received - first_received for c in collections]).reshape(-1, 1)
+    y = np.array([c.time_expected - first_received for c in collections])
+
+    # Perform linear regression
+    model = LinearRegression()
+    model.fit(X, y)
+
+    return model
+
+def perform_sync(dev_eui):
+    # Fetch TimeCollection data for the specified dev_eui
+    collections = TimeCollection.objects.filter(dev_eui=dev_eui).order_by('time_received')
+
+    model = createModel(collections, collections[0].time_received)
+
+    # Save the model parameters
+    TimeSyncModels.objects.create(
+        dev_eui=dev_eui,
+        a=model.coef_[0],
+        b=model.intercept_
+    )
+
+    return model
+
+
 
