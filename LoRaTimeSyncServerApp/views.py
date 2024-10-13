@@ -1,10 +1,14 @@
 import json
+import time
 
 from chirpstack_api import integration
+from django.core.handlers.wsgi import WSGIRequest
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from google.protobuf.json_format import Parse
 # Create your views here.
 from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
+from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection
 
 
 def unmarshal(body, pl):
@@ -31,4 +35,25 @@ def receive_uplink(request):
         dev_eui = up.device_info.dev_eui
         print(dev_eui)
         print(uplink_json)
+
+
+
+@csrf_exempt
+def test_receive(request: WSGIRequest):
+    saveTimeCollection('test_dev_eui')
+    return HttpResponse(json.dumps(request.POST))
+
+
+
+@csrf_exempt
+def test_init(request: WSGIRequest):
+    now = initTimeSync('test_dev_eui', 120)
+
+    resp = json.dumps({
+        'a': str(now),
+    #     'b': now.second,
+    #    'ms': now.microsecond,
+        'ns': time.time_ns(),
+    })
+    return HttpResponse(resp)
 
