@@ -20,5 +20,8 @@ from LoRaTimeSyncServerApp import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('uplink', views.receive_uplink)
+    path('uplink', views.receive_uplink),
+    path('test_init', views.test_init),
+    path('test', views.test_receive),
+    path('test_sync', views.test_sync)
 ]
