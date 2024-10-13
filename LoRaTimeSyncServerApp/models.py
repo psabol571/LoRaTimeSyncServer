@@ -1,16 +1,18 @@
 from django.db import models
 
+
 class TimeSyncInit(models.Model):
     dev_eui = models.CharField(max_length=16)
     period = models.IntegerField()
-    first_uplink_expected = models.DateTimeField()
+    first_uplink_expected = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
+
 
 class TimeCollection(models.Model):
     dev_eui = models.CharField(max_length=16)
-    device_time = models.DateTimeField()
-    time_expected = models.DateTimeField()
-    time_received = models.DateTimeField()
+    device_time = models.IntegerField()
+    time_expected = models.IntegerField()
+    time_received = models.IntegerField()
 
 
 class TimeSyncModels(models.Model):
