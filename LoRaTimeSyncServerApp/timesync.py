@@ -18,21 +18,12 @@ def initTimeSync(dev_eui, period):
     return now
 
 
-def saveTimeCollection(dev_eui, device_time=timezone.now(), time_received=timezone.now()):
-    device = TimeSyncInit.objects.get(dev_eui=dev_eui)
-    
-    latest_collection = TimeCollection.objects.filter(dev_eui=dev_eui).order_by('-time_received').first()
-    
-    # calculate nearest period
-    if latest_collection:
-        time_diff = time_received - latest_collection.time_expected
-        periods_passed = round(time_diff.total_seconds() / device.period)
-        time_expected = latest_collection.time_expected + timedelta(seconds=periods_passed * device.period)
-    else:
-        time_diff = time_received - device.first_uplink_expected
-        periods_passed = round(time_diff.total_seconds() / device.period)
-        time_expected = device.first_uplink_expected + timedelta(seconds=periods_passed * device.period)
-    
+def saveTimeCollection(dev_eui, device_time=time.time_ns(), time_received=time.time_ns()):
+    device = TimeSyncInit.objects.filter(dev_eui=dev_eui).last()
+
+    time_diff = time_received - device.first_uplink_expected
+    periods_passed = round(time_diff / device.period / (1000**3))
+    time_expected = device.first_uplink_expected + periods_passed * device.period * (1000**3)
     
     # Create and save the TimeCollection instance
     time_collection = TimeCollection.objects.create(

@@ -10,7 +10,7 @@ class TimeSyncInit(models.Model):
 
 class TimeCollection(models.Model):
     dev_eui = models.CharField(max_length=16)
-    device_time = models.IntegerField()
+    device_time = models.BigIntegerField()
     time_expected = models.BigIntegerField()
     time_received = models.BigIntegerField()
 
