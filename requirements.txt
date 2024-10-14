@@ -4,3 +4,4 @@ psycopg2-binary
 chirpstack-api
 django-environ
 scikit-learn
+matplotlib

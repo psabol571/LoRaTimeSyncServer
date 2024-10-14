@@ -23,5 +23,6 @@ urlpatterns = [
     path('uplink', views.receive_uplink),
     path('test_init', views.test_init),
     path('test', views.test_receive),
-    path('test_sync', views.test_sync)
+    path('test_sync', views.test_sync),
+    path('graph-time-diff', views.time_difference_graph),
 ]
