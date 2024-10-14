@@ -70,31 +70,37 @@ def test_sync(request: WSGIRequest):
     return HttpResponse('hi')
 
 
-
-# example usage: localhost:8000/graph-time-diff?time_to=1728886139242509027&time_from=0&dev_eui=test_dev_eui
+# example usage: localhost:8000/graph-time-diff?time_from=2023-01-01T00:00:00&time_to=2023-12-31T23:59:59&dev_eui=test_dev_eui
+@csrf_exempt
 def time_difference_graph(request):
     dev_eui = request.GET.get('dev_eui', '')
     time_from = request.GET.get('time_from', '')
     time_to = request.GET.get('time_to', '')
 
+
+    #  Convert time strings to datetime objects
+    time_from = timezone.datetime.fromisoformat(time_from) if time_from else timezone.now() - timedelta(days=7)
+    time_to = timezone.datetime.fromisoformat(time_to) if time_to else timezone.now()
+
+    #  Convert datetime to Unix timestamp in nanoseconds
+    unix_from = time_from.timestamp() * 1e9
+    unix_to = time_to.timestamp() * 1e9
+
     # Fetch TimeCollection data
     collections = TimeCollection.objects.filter(
         dev_eui=dev_eui,
-        time_received__range=(time_from, time_to)
+        time_received__range=(unix_from, unix_to)
     ).order_by('time_received')
 
     # Prepare data for plotting
     x_values = range(1, len(collections) + 1)
     time_diffs = [(c.time_expected - c.time_received) for c in collections]
 
-    from_date = timezone.datetime.fromtimestamp(int(time_from)/1e9)
-    to_date = timezone.datetime.fromtimestamp(int(time_to)/1e9)
-    # Create the plot
     plt.figure(figsize=(10, 6))
     plt.plot(x_values, time_diffs, 'bo-')
     plt.xlabel('Time slot id')
     plt.ylabel('Time Difference (nanoseconds)')
-    plt.title(f'Time Difference for Device \'{dev_eui}\' from {from_date} to {to_date}')
+    plt.title(f'Time Difference for Device \'{dev_eui}\' from {time_from} to {time_to}')
     plt.grid(True)
     plt.xticks(x_values)
 
