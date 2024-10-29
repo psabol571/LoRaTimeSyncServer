@@ -1,20 +1,17 @@
 import json
 import grpc
 from chirpstack_api import api
-import environ
+from django.conf import settings
 
 
 def send_downlink(self, dev_eui, data):
     data = json.dumps(data)
 
-    env = environ.Env()
-    environ.Env.read_env()
-
-    channel = grpc.insecure_channel(env("HOST"))
+    channel = grpc.insecure_channel(settings.HOST)
 
     client = api.DeviceServiceStub(channel)
 
-    auth_token = [("authorization", "Bearer %s" % env("CHIRPSTACK_API_KEY"))]
+    auth_token = [("authorization", "Bearer %s" % settings.CHIRPSTACK_API_KEY)]
 
     req = api.EnqueueDeviceQueueItemRequest()
     req.queue_item.confirmed = False

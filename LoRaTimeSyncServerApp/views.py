@@ -1,8 +1,7 @@
 import io
 import json
 import time
-import environ
-
+from django.conf import settings
 from chirpstack_api import integration
 import matplotlib.pyplot as plt
 from django.core.handlers.wsgi import WSGIRequest
@@ -72,9 +71,7 @@ def test_sync(request: WSGIRequest):
 
 @csrf_exempt
 def test_host(request: WSGIRequest):
-    env = environ.Env()
-    environ.Env.read_env()
-    return HttpResponse(env('HOST'))
+    return HttpResponse(settings.HOST)
 
 
 # example usage: localhost:8000/graph-time-diff?time_from=2023-01-01T00:00:00&time_to=2023-12-31T23:59:59&dev_eui=test_dev_eui

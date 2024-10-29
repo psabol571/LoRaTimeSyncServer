@@ -21,11 +21,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-allsnf@!%d2)l5v^yx&pg08_&*bzyr^7l67&6s=s-^3m!y@!!q'
+HOST = '10.0.190.13'
+CHIRPSTACK_API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjaGlycHN0YWNrIiwiaXNzIjoiY2hpcnBzdGFjayIsInN1YiI6IjFmZTk1ZmQwLTExMmEtNGIwMi1hZTAxLTYwOWFiZGY2ODZhYiIsInR5cCI6ImtleSJ9.ssQzuAUWvbHJTA4nqZXqUNvz7rPKV-NW3AuIFpOhiaw'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '10.0.190.13',
+    'localhost',
+]
 
 
 # Application definition
