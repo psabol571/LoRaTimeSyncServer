@@ -40,6 +40,8 @@ def receive_uplink(request):
         print(dev_eui)
         print(uplink_json)
 
+    return HttpResponse('uplink')
+
 
 
 @csrf_exempt
