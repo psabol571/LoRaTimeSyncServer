@@ -1,6 +1,7 @@
 import io
 import json
 import time
+import environ
 
 from chirpstack_api import integration
 import matplotlib.pyplot as plt
@@ -68,6 +69,12 @@ def test_sync(request: WSGIRequest):
     perform_sync('test_dev_eui')
 
     return HttpResponse('hi')
+
+@csrf_exempt
+def test_host(request: WSGIRequest):
+    env = environ.Env()
+    environ.Env.read_env()
+    return HttpResponse(env('HOST'))
 
 
 # example usage: localhost:8000/graph-time-diff?time_from=2023-01-01T00:00:00&time_to=2023-12-31T23:59:59&dev_eui=test_dev_eui
