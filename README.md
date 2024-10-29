@@ -19,11 +19,11 @@ docker-compose exec web python manage.py makemigrations
 # Run in background
 
 ```
-docker compose up -d
+docker-compose up -d
 ```
 
 # See background logs
 
 ```
-docker compose logs -f
+docker-compose logs -f
 ```
