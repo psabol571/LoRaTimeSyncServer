@@ -26,11 +26,20 @@ def uplink_to_json(body):
     return json.loads(hex_string)
 
 
+@csrf_exempt
 def receive_uplink(request):
     event = request.GET.get('event', None)
     body = request.body
-    body_json = json.loads(body if body else '{}')
 
+    body_json = {}
+    try :
+        body_json = json.loads(body)
+    except json.JSONDecodeError:
+        body_json = {}
+   
+    print('body')
+    print(body)
+    print('body_json')
     print(body_json)
 
     if event == "up":
