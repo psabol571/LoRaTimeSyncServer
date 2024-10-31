@@ -22,10 +22,11 @@ def unmarshal(body, pl):
     return Parse(body, pl)
 
 
-def uplink_to_json(body):
-    message = body['payload']
+def uplink_data_to_json(message):
     hex_bytes = bytes.fromhex(message)
     hex_string = hex_bytes.decode('utf-8')
+    logger.info('hex_string')
+    logger.info(hex_string)
     return json.loads(hex_string)
 
 
@@ -51,8 +52,9 @@ def receive_uplink(request):
         logger.info('up')
         logger.info(up)
         dev_eui = up.device_info.dev_eui
-        logger.info('dev_eui')
-        logger.info(dev_eui)
+        data = uplink_data_to_json(up.payload)
+        logger.info('data')
+        logger.info(data)
 
     return HttpResponse('uplink')
 
