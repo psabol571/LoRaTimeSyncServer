@@ -14,6 +14,9 @@ from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
 from LoRaTimeSyncServerApp.models import TimeCollection
 from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync
 
+import logging
+logger = logging.getLogger('django')
+
 
 def unmarshal(body, pl):
     return Parse(body, pl)
@@ -37,18 +40,18 @@ def receive_uplink(request):
     except json.JSONDecodeError:
         body_json = {}
    
-    print('body')
-    print(body)
-    print('body_json')
-    print(body_json)
+    logger.info('body')
+    logger.info(body)
+    logger.info('body_json')
+    logger.info(body_json)
 
     if event == "up":
         up = unmarshal(body, integration.UplinkEvent())
 
         uplink_json = uplink_to_json(up.body.hex())
         dev_eui = up.device_info.dev_eui
-        print(dev_eui)
-        print(uplink_json)
+        logger.info(dev_eui)
+        logger.info(uplink_json)
 
     return HttpResponse('uplink')
 
