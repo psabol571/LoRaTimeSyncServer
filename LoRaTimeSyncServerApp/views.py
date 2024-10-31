@@ -48,6 +48,10 @@ def receive_uplink(request):
     if event == "up":
         up = unmarshal(body, integration.UplinkEvent())
 
+        logger.info('up')
+        logger.info(up)
+        logger.info('up.body')
+        logger.info(up.body)
         uplink_json = uplink_to_json(up.body.hex())
         dev_eui = up.device_info.dev_eui
         logger.info(dev_eui)
