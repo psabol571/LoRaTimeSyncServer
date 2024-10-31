@@ -50,12 +50,9 @@ def receive_uplink(request):
 
         logger.info('up')
         logger.info(up)
-        uplink_json = uplink_to_json(up)
-        logger.info('uplink_json')
-        logger.info(uplink_json)
         dev_eui = up.device_info.dev_eui
+        logger.info('dev_eui')
         logger.info(dev_eui)
-        logger.info(uplink_json)
 
     return HttpResponse('uplink')
 
