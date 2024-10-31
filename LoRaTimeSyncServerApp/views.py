@@ -32,6 +32,8 @@ def receive_uplink(request):
     body = request.body
     body_json = json.loads(body if body else '{}')
 
+    print(body_json)
+
     if event == "up":
         up = unmarshal(body, integration.UplinkEvent())
 
