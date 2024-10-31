@@ -22,8 +22,7 @@ def unmarshal(body, pl):
     return Parse(body, pl)
 
 
-def uplink_data_to_json(message):
-    hex_bytes = bytes.fromhex(message)
+def uplink_data_to_json(hex_bytes):
     hex_string = hex_bytes.decode('utf-8')
     logger.info('hex_string')
     logger.info(hex_string)
