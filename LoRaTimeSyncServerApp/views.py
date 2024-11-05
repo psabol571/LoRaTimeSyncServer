@@ -30,7 +30,7 @@ def uplink_data_to_json(hex_bytes):
         return json.loads(hex_string)
     except json.JSONDecodeError as e:
         logger.error(f"Failed to decode JSON")
-        return {}
+        return None
 
 
 @csrf_exempt
@@ -46,11 +46,10 @@ def receive_uplink(request):
         data = uplink_data_to_json(up.data)
         logger.info('data')
         logger.info(data)
-        logger.info(data['p'])
         logger.info('dev-eui')
         logger.info(dev_eui)
 
-        if data['p'] is not None: 
+        if data is not None and data['p'] is not None: 
             first_uplink_expected = initTimeSync(dev_eui, data['p'], now)
             downlink_data = f'i,{time.time_ns()},{first_uplink_expected}'
             send_downlink(dev_eui, downlink_data)
