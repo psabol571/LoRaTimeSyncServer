@@ -49,7 +49,9 @@ def receive_uplink(request):
         if data['p'] is not None: 
             first_uplink_expected = initTimeSync(dev_eui, data['p'])
             downlink_data = f'i,{now},{first_uplink_expected}'
-            send_downlink(dev_eui, downlink_data)
+            send_downlink(dev_eui, {
+                "t": 10,
+            })
         else:
             saveTimeCollection(dev_eui, now, now)
 
