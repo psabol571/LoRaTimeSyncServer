@@ -31,29 +31,27 @@ def uplink_data_to_json(hex_bytes):
 
 @csrf_exempt
 def receive_uplink(request):
+    now = time.time_ns()
     event = request.GET.get('event', None)
     body = request.body
-
-    body_json = {}
-    try :
-        body_json = json.loads(body)
-    except json.JSONDecodeError:
-        body_json = {}
-   
-    logger.info('body')
-    logger.info(body)
-    logger.info('body_json')
-    logger.info(body_json)
 
     if event == "up":
         up = unmarshal(body, integration.UplinkEvent())
 
-        logger.info('up')
-        logger.info(up)
         dev_eui = up.device_info.dev_eui
         data = uplink_data_to_json(up.data)
         logger.info('data')
         logger.info(data)
+        logger.info('dev-eui');
+        logger.info(dev_eui)
+
+        if data.p is not None: 
+            first_uplink_expected = initTimeSync(dev_eui, data.p)
+            downlink_data = f'i,{now},{first_uplink_expected}'
+            send_downlink(dev_eui, downlink_data)
+        else:
+            saveTimeCollection(dev_eui, now, now)
+
 
     return HttpResponse('uplink')
 

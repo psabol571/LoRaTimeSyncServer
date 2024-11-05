@@ -4,7 +4,7 @@ from chirpstack_api import api
 from django.conf import settings
 
 
-def send_downlink(self, dev_eui, data):
+def send_downlink(dev_eui, data):
     data = json.dumps(data)
 
     channel = grpc.insecure_channel(settings.HOST)

@@ -18,11 +18,14 @@ def initTimeSync(dev_eui, period):
         first_uplink_expected=first_uplink_expected,
     )
 
-    return now
+    return first_uplink_expected
 
 
 def saveTimeCollection(dev_eui, device_time, time_received):
     device = TimeSyncInit.objects.filter(dev_eui=dev_eui).last()
+
+    if device is None:
+        return None
 
     time_diff = time_received - device.first_uplink_expected
     periods_passed = round(time_diff / device.period / (1000**3))
