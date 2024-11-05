@@ -7,7 +7,7 @@ from django.conf import settings
 def send_downlink(dev_eui, data):
     data = json.dumps(data)
 
-    channel = grpc.insecure_channel(settings.HOST)
+    channel = grpc.insecure_channel(settings.CHIRPSTACK_HOST)
 
     client = api.DeviceServiceStub(channel)
 
