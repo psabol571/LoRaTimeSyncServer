@@ -47,7 +47,7 @@ def receive_uplink(request):
         logger.info(dev_eui)
 
         if data['p'] is not None: 
-            first_uplink_expected = initTimeSync(dev_eui, data['p'])
+            first_uplink_expected = initTimeSync(dev_eui, data['p'], now)
             downlink_data = f'i,{now},{first_uplink_expected}'
             send_downlink(dev_eui, downlink_data)
         else:
@@ -68,7 +68,8 @@ def test_receive(request: WSGIRequest):
 
 @csrf_exempt
 def test_init(request: WSGIRequest):
-    now = initTimeSync('test_dev_eui', 120)
+    now = time.time_ns()
+    now = initTimeSync('test_dev_eui', 120, now)
 
     resp = json.dumps({
         'a': str(now),

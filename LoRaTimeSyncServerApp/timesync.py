@@ -7,10 +7,12 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 
 
-def initTimeSync(dev_eui, period):
-    now = time.time_ns()
-    reserve = 10
-    first_uplink_expected = now + (period + reserve) * (1000**3)  # add period and reserver as nanoseconds
+def initTimeSync(dev_eui, period, now):
+    reserve = 3
+    first_uplink_expected = (
+        (now + (period + reserve) * (1000**3))  # add period and reserve as nanoseconds
+        // (1000**3) 
+    ) * (1000**3)  # and cut it to nearest second
     
     time_sync_device = TimeSyncInit.objects.create(
         dev_eui=dev_eui,
