@@ -8,7 +8,7 @@ logger = logging.getLogger('django')
 
 
 def send_downlink(dev_eui, data):
-    data = json.dumps(data)
+    # data = json.dumps(data)
     logger.info('data_downlink')
     logger.info(data)
 
