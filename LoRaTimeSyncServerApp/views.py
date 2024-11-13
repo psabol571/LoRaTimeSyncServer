@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from google.protobuf.json_format import Parse
 # Create your views here.
 from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
-from LoRaTimeSyncServerApp.models import TimeCollection
+from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit
 from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync
 
 import logging
