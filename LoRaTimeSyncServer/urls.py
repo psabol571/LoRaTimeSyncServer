@@ -25,6 +25,6 @@ urlpatterns = [
     # path('test', views.test_receive),
     # path('test_sync', views.test_sync),
     # path('test_host', views.test_host),
-    path('graph-time-diff', views.time_difference_graph),
-    path('graph-time-diff_v2', views.time_difference_graph_v2),
+    # path('graph-time-diff', views.time_difference_graph),
+    path('graph-time-diff', views.time_difference_graph_v2),
 ]
