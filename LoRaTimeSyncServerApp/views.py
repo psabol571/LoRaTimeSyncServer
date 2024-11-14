@@ -51,7 +51,7 @@ def receive_uplink(request):
         logger.info('dev-eui')
         logger.info(dev_eui)
 
-        time_received = up.time.seconds * (1000**3) + up.time.nanoseconds
+        time_received = up.time.seconds * (1000**3) + up.time.nanos
 
         logger.info('time_received')
         logger.info(time_received)
