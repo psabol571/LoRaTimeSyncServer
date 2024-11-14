@@ -42,6 +42,8 @@ def receive_uplink(request):
     if event == "up":
         up = unmarshal(body, integration.UplinkEvent())
 
+        logger.info('up')
+        logger.info(up)
         dev_eui = up.device_info.dev_eui
         data = uplink_data_to_json(up.data)
         logger.info('data')
