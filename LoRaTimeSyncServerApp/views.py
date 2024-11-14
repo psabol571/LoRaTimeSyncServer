@@ -51,12 +51,17 @@ def receive_uplink(request):
         logger.info('dev-eui')
         logger.info(dev_eui)
 
+        time_received = up.time.seconds * (1000**3) + up.time.nanoseconds
+
+        logger.info('time_received')
+        logger.info(time_received)
+
         if data is not None and data['p'] is not None: 
-            first_uplink_expected = initTimeSync(dev_eui, data['p'], now)
+            first_uplink_expected = initTimeSync(dev_eui, data['p'], time_received)
             downlink_data = f'i,{time.time_ns()},{first_uplink_expected}'
             send_downlink(dev_eui, downlink_data)
         else:
-            saveTimeCollection(dev_eui, now, now)
+            saveTimeCollection(dev_eui, now, time_received)
 
 
     return HttpResponse('uplink')
