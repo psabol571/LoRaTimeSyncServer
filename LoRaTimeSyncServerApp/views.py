@@ -12,7 +12,7 @@ from google.protobuf.json_format import Parse
 # Create your views here.
 from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit
-from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync
+from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModel
 
 import logging
 logger = logging.getLogger('django')
@@ -299,3 +299,39 @@ def time_difference_graph_v4(request):
         return HttpResponse(buffer.getvalue(), content_type='image/png')
     
     return HttpResponse("No data available", content_type='text/plain')
+
+
+@csrf_exempt
+def test_model(request):
+    dev_eui = request.GET.get('dev_eui', '')
+    time_from = request.GET.get('time_from', '')
+    time_to = request.GET.get('time_to', '')
+
+    #  Convert time strings to datetime objects
+    time_from = timezone.datetime.fromisoformat(time_from) if time_from else timezone.now() - timedelta(days=7)
+    time_to = timezone.datetime.fromisoformat(time_to) if time_to else timezone.now()
+
+    #  Convert datetime to Unix timestamp in nanoseconds
+    unix_from = time_from.timestamp() * 1e9
+    unix_to = time_to.timestamp() * 1e9
+
+    # Get the last TimeSyncInit record for this experiment
+    sync_init = TimeSyncInit.objects.filter(
+        dev_eui=dev_eui,
+        created_at__lte=time_to
+    ).order_by('-created_at').first()
+
+    # Fetch TimeCollection data
+    collections = TimeCollection.objects.filter(
+        dev_eui=dev_eui,
+        time_received__range=(unix_from, unix_to)
+    ).order_by('time_received')
+
+    first_received = collections[0].time_received
+
+    model = createModel(collections, first_received)
+
+    return HttpResponse({
+        'a': model.coef_[0],
+        'b': model.intercept_,
+    })

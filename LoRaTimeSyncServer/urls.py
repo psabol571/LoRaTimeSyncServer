@@ -28,4 +28,5 @@ urlpatterns = [
     path('graph-time-diff', views.time_difference_graph_v2),
     path('graph-time-diff_v3', views.time_difference_graph_v3),
     path('graph-time-diff_v4', views.time_difference_graph_v4),
+    path('test_model', views.test_model),
 ]
