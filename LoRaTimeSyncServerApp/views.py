@@ -331,7 +331,7 @@ def test_model(request):
 
     model = createModel(collections, first_received)
 
-    return HttpResponse({
+    return HttpResponse(json.dumps({
         'a': model.coef_[0],
         'b': model.intercept_,
-    })
+    }))
