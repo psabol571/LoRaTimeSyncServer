@@ -276,10 +276,12 @@ def time_difference_graph_v4(request):
         time_received__range=(unix_from, unix_to)
     ).order_by('time_received')
 
+    first_received = collections[0].time_received
+
     if collections and sync_init:
         # x_values represents minutes now
-        x_values = [(c.time_received) for c in collections]
-        time_diffs = [(c.time_expected) for c in collections]
+        x_values = [(c.time_expected - first_received) for c in collections]
+        time_diffs = [(c.time_received - first_received) for c in collections]
 
         plt.figure(figsize=(10, 6))
         plt.plot(x_values, time_diffs, 'bo-')
