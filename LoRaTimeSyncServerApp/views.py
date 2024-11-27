@@ -334,4 +334,5 @@ def test_model(request):
     return HttpResponse(json.dumps({
         'a': model.coef_[0],
         'b': model.intercept_,
+        'P': sync_init.period * 1e9 * model.coef_[0],
     }))
