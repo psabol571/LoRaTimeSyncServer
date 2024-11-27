@@ -58,20 +58,40 @@ def createModel(collections, first_received):
 
 def perform_sync(dev_eui):
 
-    # Fetch TimeCollection data for the specified dev_eui
-    collections = TimeCollection.objects.filter(dev_eui=dev_eui).order_by('time_received')
+    # Get the last TimeSyncInit record 
+    sync_init = TimeSyncInit.objects.filter(
+        dev_eui=dev_eui,
+    ).order_by('-created_at').first()
 
-    # MIN_N = 300
-    # if len(collections) < MIN_N:
-    #     return
+    if sync_init is None:
+        return
+
+    existing_model = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at)
+
+    # for now perform sync only once
+    if existing_model is not None:
+        return
+
+    # Fetch TimeCollection data for the specified dev_eui with time_expected greater than the first_uplink_expected
+    collections = TimeCollection.objects.filter(dev_eui=dev_eui, time_expected__gt=sync_init.first_uplink_expected).order_by('time_received')
+
+    # perform sync only when you have at least MIN_N records of data
+    MIN_N = 50
+    if len(collections) < MIN_N:
+        return
 
     model = createModel(collections, collections[0].time_received)
 
+    new_period_ns = int(sync_init.period * 1e9 * model.coef_[0])
+    new_period_ms = int(new_period_ns / 1e3)
+
     # Save the model parameters
-    TimeSyncModels.objects.create(
+    model = TimeSyncModels.objects.create(
         dev_eui=dev_eui,
         a=model.coef_[0],
-        b=model.intercept_
+        b=model.intercept_,
+        new_period_ms=new_period_ms,
+        new_period_ns=new_period_ns,
     )
 
     return model

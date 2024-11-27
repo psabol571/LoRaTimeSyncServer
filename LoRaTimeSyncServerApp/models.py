@@ -19,5 +19,7 @@ class TimeSyncModels(models.Model):
     dev_eui = models.CharField(max_length=16)
     a=models.FloatField()
     b=models.FloatField()
+    new_period_ms=models.BigIntegerField(null=True)
+    new_period_ns=models.BigIntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
