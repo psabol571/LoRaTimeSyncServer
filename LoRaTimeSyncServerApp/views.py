@@ -66,7 +66,7 @@ def receive_uplink(request):
 
             # if model is created, send synchronization downlink
             if model is not None:
-                downlink_data = f's,{model.new_period_ns},{int(model.b)}'
+                downlink_data = f's,{int(model.b)},{model.new_period_ns}'
                 logger.info('model is created')
                 logger.info(downlink_data)
                 send_downlink(dev_eui, downlink_data)
