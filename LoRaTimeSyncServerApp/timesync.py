@@ -76,7 +76,7 @@ def perform_sync(dev_eui):
     collections = TimeCollection.objects.filter(dev_eui=dev_eui, time_expected__gt=sync_init.first_uplink_expected).order_by('time_received')
 
     # perform sync only when you have at least MIN_N records of data
-    MIN_N = 50
+    MIN_N = 200
     if len(collections) < MIN_N:
         return
 
