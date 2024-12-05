@@ -344,7 +344,7 @@ def test_model(request):
         'b': model.intercept_,
         'P': sync_init.period * 1e9 * model.coef_[0],
         'p_micro': int(sync_init.period * 1e9 * model.coef_[0] / 1e3),
-        'a_recreated': this.p_micro / sync_init.period,
+        'a_recreated': int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period,
     }))
 
 
@@ -383,7 +383,7 @@ def time_difference_graph_synced(request):
         'b': model.intercept_,
         'P': sync_init.period * 1e9 * model.coef_[0],
         'p_micro': int(sync_init.period * 1e9 * model.coef_[0] / 1e3),
-        'a_recreated': this.p_micro / sync_init.period,
+        'a_recreated': int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period,
     }
 
     def modify_received(received):
