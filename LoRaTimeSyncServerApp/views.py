@@ -344,7 +344,8 @@ def test_model(request):
         'b': model.intercept_,
         'P': sync_init.period * 1e9 * model.coef_[0],
         'p_micro': int(sync_init.period * 1e9 * model.coef_[0] / 1e3),
-        'a_recreated': int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period,
+        'a_recreated': int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period / 1e6,
+        'pmicro2': (int(sync_init.period * 1e9 * (int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period / 1e6) / 1e3) / sync_init.period / 1e6),
     }))
 
 
@@ -383,7 +384,8 @@ def time_difference_graph_synced(request):
         'b': model.intercept_,
         'P': sync_init.period * 1e9 * model.coef_[0],
         'p_micro': int(sync_init.period * 1e9 * model.coef_[0] / 1e3),
-        'a_recreated': int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period,
+        'a_recreated': int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period / 1e6,
+        'pmicro2': (int(sync_init.period * 1e9 * (int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period / 1e6) / 1e3) / sync_init.period / 1e6),
     }
 
     def modify_received(received):
