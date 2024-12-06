@@ -92,7 +92,7 @@ def perform_sync(dev_eui):
     if len(collections) < MIN_N:
         return
 
-    model = createModel(collections, collections[0].time_received)
+    model = createModelV2(collections, collections[0].time_received)
 
     new_period_ns = int(sync_init.period * 1e9 * model.coef_[0])
     new_period_ms = int(new_period_ns / 1e3)
