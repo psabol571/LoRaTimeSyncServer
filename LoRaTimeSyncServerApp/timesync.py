@@ -56,6 +56,18 @@ def createModel(collections, first_received):
     return model
 
 
+def createModelV2(collections, first_received):
+    # Prepare data for linear regression
+    X = np.array([c.time_received - first_received for c in collections]).reshape(-1, 1)
+    y = np.array([c.time_expected - first_received for c in collections])
+
+    # Perform linear regression
+    model = LinearRegression()
+    model.fit(X, y)
+
+    return model
+
+
 def perform_sync(dev_eui):
 
     # Get the last TimeSyncInit record 

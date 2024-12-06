@@ -12,7 +12,7 @@ from google.protobuf.json_format import Parse
 # Create your views here.
 from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit
-from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModel
+from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModel, createModelV2
 
 import logging
 logger = logging.getLogger('django')
@@ -339,13 +339,26 @@ def test_model(request):
 
     model = createModel(collections, first_received)
 
-    return HttpResponse(json.dumps({
+    model2 = createModelV2(collections, first_received)
+
+    timeSync1 = {
         'a': model.coef_[0],
         'b': model.intercept_,
         'P': sync_init.period * 1e9 * model.coef_[0],
         'p_micro': int(sync_init.period * 1e9 * model.coef_[0] / 1e3),
         'a_recreated': int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period / 1e6,
         'pmicro2': int(sync_init.period * 1e9 * (int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period / 1e6) / 1e3)
+    }
+
+    timeSync2 = {
+        'a': model2.coef_[0],
+        'b': model2.intercept_,
+        'a-1': (model2.coef_[0] - 1),
+    }
+
+    return HttpResponse(json.dumps({
+        '1': timeSync1,
+        '2': timeSync2
     }))
 
 
@@ -388,13 +401,21 @@ def time_difference_graph_synced(request):
         'pmicro2': (int(sync_init.period * 1e9 * (int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period / 1e6) / 1e3) / sync_init.period / 1e6),
     }
 
-    def modify_received(received):
-        return received / sync_response['a_recreated']
+    # def modify_received(received):
+    #     return received / sync_response['a_recreated']
+
+    def build_time_diffs(collections):
+        time_diffs = []
+        for c in collections:
+            periods_passed = round((c.time_received - first_received) / (sync_init.period * 1e9))
+            periods_diff = (periods_passed * sync_response.p_micro) - (periods_passed * sync_init.period * 1e6) * 1e9
+            time_diffs.append(c.time_expected - c.time_received)
+        return time_diffs
 
     if collections and sync_init:
         # x_values represents minutes now
         x_values = [(c.time_expected - sync_init.first_uplink_expected) / (60 * 1e9) for c in collections]
-        time_diffs = [(c.time_expected - modify_received(c.time_received)) for c in collections]
+        time_diffs = [(c.time_expected - c.time_received) for c in collections]
 
         plt.figure(figsize=(10, 6))
         plt.plot(x_values, time_diffs, 'bo-')
