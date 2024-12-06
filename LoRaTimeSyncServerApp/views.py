@@ -353,7 +353,7 @@ def test_model(request):
     timeSync2 = {
         'a': model2.coef_[0],
         'b': model2.intercept_,
-        'a-1': (model2.coef_[0] - 1),
+        'a-1': (model2.coef_[0] - 1) * sync_init.period,
     }
 
     return HttpResponse(json.dumps({
