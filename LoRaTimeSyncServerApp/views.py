@@ -354,7 +354,7 @@ def test_model(request):
         'a': model2.coef_[0],
         'b': model2.intercept_,
         'a-1': (model2.coef_[0] - 1) * sync_init.period,
-        'p_micro': int(sync_init.period * 1e9 * model.coef_[0] / 1e3),
+        'p_micro': int(sync_init.period * 1e9 * model2.coef_[0] / 1e3),
     }
 
     return HttpResponse(json.dumps({
