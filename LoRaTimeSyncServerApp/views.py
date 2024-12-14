@@ -356,6 +356,7 @@ def test_model(request):
         'a': model2.coef_[0],
         'b': model2.intercept_,
         'a-1': (model2.coef_[0] - 1) * sync_init.period,
+        'P': sync_init.period * 1e9 * model2.coef_[0],
         'p_micro': int(sync_init.period * 1e9 * model2.coef_[0] / 1e3),
     }
 
@@ -363,6 +364,7 @@ def test_model(request):
         'a': model3.coef_[0],
         'b': model3.intercept_,
         'a-1': (model3.coef_[0] - 1) * sync_init.period,
+        'P': sync_init.period * 1e9 * model3.coef_[0],
         'p_micro': int(sync_init.period * 1e9 * model3.coef_[0] / 1e3),
     }
 
