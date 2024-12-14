@@ -12,7 +12,7 @@ from google.protobuf.json_format import Parse
 # Create your views here.
 from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit
-from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModel, createModelV2
+from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModel, createModelV2, createModelV3
 
 import logging
 logger = logging.getLogger('django')
