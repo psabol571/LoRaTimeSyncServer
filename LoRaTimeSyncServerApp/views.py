@@ -341,6 +341,8 @@ def test_model(request):
 
     model2 = createModelV2(collections, first_received)
 
+    model3 = createModelV3(collections, first_received)
+
     timeSync1 = {
         'a': model.coef_[0],
         'b': model.intercept_,
@@ -357,9 +359,17 @@ def test_model(request):
         'p_micro': int(sync_init.period * 1e9 * model2.coef_[0] / 1e3),
     }
 
+    timeSync3 = {
+        'a': model3.coef_[0],
+        'b': model3.intercept_,
+        'a-1': (model3.coef_[0] - 1) * sync_init.period,
+        'p_micro': int(sync_init.period * 1e9 * model3.coef_[0] / 1e3),
+    }
+
     return HttpResponse(json.dumps({
         '1': timeSync1,
-        '2': timeSync2
+        '2': timeSync2,
+        '3': timeSync3
     }))
 
 
