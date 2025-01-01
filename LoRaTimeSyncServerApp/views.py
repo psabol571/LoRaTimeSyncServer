@@ -153,7 +153,7 @@ def time_difference_graph(request):
     return HttpResponse(buffer.getvalue(), content_type='image/png')
 
 
-# example usage: localhost:8000/graph-time-diff_v2?time_from=2023-01-01T00:00:00&time_to=2023-12-31T23:59:59&dev_eui=test_dev_eui
+# example usage: localhost:8000/graph-time-diff?time_from=2023-01-01T00:00:00&time_to=2023-12-31T23:59:59&dev_eui=test_dev_eui
 @csrf_exempt
 def time_difference_graph_v2(request):
     dev_eui = request.GET.get('dev_eui', '')
@@ -183,13 +183,13 @@ def time_difference_graph_v2(request):
     if collections and sync_init:
         # x_values represents minutes now
         x_values = [(c.time_expected - sync_init.first_uplink_expected) / (60 * 1e9) for c in collections]
-        time_diffs = [(c.time_expected - c.time_received) for c in collections]
+        time_diffs = [(c.time_expected - c.time_received) / 1e9 for c in collections]
 
         plt.figure(figsize=(10, 6))
         plt.plot(x_values, time_diffs, 'bo-')
-        plt.xlabel('Time (minutes)')
-        plt.ylabel('Time Difference (nanoseconds)')
-        plt.title(f'Time Difference for Device \'{dev_eui}\' from {time_from} to {time_to}')
+        plt.xlabel('Čas (minúty)')
+        plt.ylabel('Časový rozdiel T0-t0 (sekundy)')
+        plt.title(f'{time_from} - {time_to}')
         plt.grid(True)
 
         # Save the plot to a buffer
@@ -203,7 +203,6 @@ def time_difference_graph_v2(request):
     return HttpResponse("No data available", content_type='text/plain')
 
 
-# example usage: localhost:8000/graph-time-diff_v2?time_from=2023-01-01T00:00:00&time_to=2023-12-31T23:59:59&dev_eui=test_dev_eui
 @csrf_exempt
 def time_difference_graph_v3(request):
     dev_eui = request.GET.get('dev_eui', '')
