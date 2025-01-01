@@ -241,9 +241,9 @@ def time_difference_graph_v3(request):
 
         plt.figure(figsize=(10, 6))
         plt.plot(x_values, time_diffs, 'bo-')
-        plt.xlabel('Time (minutes)')
-        plt.ylabel('Time Difference (nanoseconds)')
-        plt.title(f'Time Difference for Device \'{dev_eui}\' from {time_from} to {time_to}')
+        plt.xlabel('Čas (minúty)')
+        plt.ylabel('Časový rozdiel T0-t0 (sekundy)')
+        plt.title(f'{time_from} - {time_to}')        
         plt.grid(True)
 
         # Save the plot to a buffer
