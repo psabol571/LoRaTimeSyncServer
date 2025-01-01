@@ -237,7 +237,7 @@ def time_difference_graph_v3(request):
 
         # x_values represents minutes now
         x_values = [(x[0]) / (60 * 1e9) for x in filtered_data]
-        time_diffs = [x[1] for x in filtered_data]
+        time_diffs = [x[1] / 1e9 for x in filtered_data]
 
         plt.figure(figsize=(10, 6))
         plt.plot(x_values, time_diffs, 'bo-')
