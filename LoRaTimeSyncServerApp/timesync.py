@@ -97,10 +97,12 @@ def perform_sync(dev_eui):
     if sync_init is None:
         return
 
-    existing_model = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at)
+    existing_model = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at).first()
 
     logger.info("existing_model is not None: ")
     logger.info(existing_model is not None)
+    logger.info(existing_model.created_at)
+    logger.info(sync_init.created_at)
 
     # for now perform sync only once
     if existing_model is not None:
