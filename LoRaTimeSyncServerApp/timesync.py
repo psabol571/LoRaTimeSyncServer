@@ -107,7 +107,7 @@ def perform_sync(dev_eui):
         return
 
     # Fetch TimeCollection data for the specified dev_eui with time_expected greater than the first_uplink_expected
-    collections = TimeCollection.objects.filter(dev_eui=dev_eui, time_expected__gt=sync_init.first_uplink_expected).order_by('time_received')
+    collections = TimeCollection.objects.filter(dev_eui=dev_eui, time_expected__gte=sync_init.first_uplink_expected).order_by('time_received')
 
     logger.info("Collections length")
     logger.info(len(collections))
@@ -115,7 +115,7 @@ def perform_sync(dev_eui):
     if len(collections) == 1:
         # Calculate the offset for the first uplink
         first_collection = collections[0]
-        offset = first_collection.time_received - first_collection.time_expectedx
+        offset = first_collection.time_received - first_collection.time_expected
         # send offset after first uplink
         return f's,{int(offset)}'  # You can log this or handle it as needed
 
