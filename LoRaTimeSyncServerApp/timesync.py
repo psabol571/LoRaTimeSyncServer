@@ -98,6 +98,13 @@ def perform_sync(dev_eui):
     # Fetch TimeCollection data for the specified dev_eui with time_expected greater than the first_uplink_expected
     collections = TimeCollection.objects.filter(dev_eui=dev_eui, time_expected__gt=sync_init.first_uplink_expected).order_by('time_received')
 
+    if len(collections) == 1:
+        # Calculate the offset for the first uplink
+        first_collection = collections[0]
+        offset = first_collection.time_received - first_collection.time_expectedx
+        # send offset after first uplink
+        return f's,{int(offset)}'  # You can log this or handle it as needed
+
     # perform sync only when you have at least MIN_N records of data
     MIN_N = 200
     if len(collections) < MIN_N:
@@ -117,7 +124,7 @@ def perform_sync(dev_eui):
         new_period_ns=new_period_ns,
     )
 
-    return model
+    return f's,{int(model.b)},{model.new_period_ns}'
 
 
 

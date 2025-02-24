@@ -42,19 +42,11 @@ def receive_uplink(request):
     if event == "up":
         up = unmarshal(body, integration.UplinkEvent())
 
-        # logger.info('up')
-        # logger.info(up)
         dev_eui = up.device_info.dev_eui
         data = uplink_data_to_json(up.data)
-        # logger.info('data')
-        # logger.info(data)
-        # logger.info('dev-eui')
-        # logger.info(dev_eui)
 
+        # time when gateway received the message
         time_received = up.time.seconds * (1000**3) + up.time.nanos
-
-        # logger.info('time_received')
-        # logger.info(time_received)
 
         if data is not None and data['p'] is not None: 
             first_uplink_expected = initTimeSync(dev_eui, data['p'], time_received)
@@ -62,13 +54,10 @@ def receive_uplink(request):
             send_downlink(dev_eui, downlink_data)
         else:
             saveTimeCollection(dev_eui, now, time_received)
-            model = perform_sync(dev_eui)
-
+            downlink_data = perform_sync(dev_eui)
+            
             # if model is created, send synchronization downlink
-            if model is not None:
-                downlink_data = f's,{int(model.b)},{model.new_period_ns}'
-                logger.info('model is created')
-                logger.info(downlink_data)
+            if downlink_data is not None:
                 send_downlink(dev_eui, downlink_data)
 
 
