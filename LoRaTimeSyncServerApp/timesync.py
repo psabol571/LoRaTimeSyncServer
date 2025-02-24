@@ -106,7 +106,7 @@ def perform_sync(dev_eui):
         return f's,{int(offset)}'  # You can log this or handle it as needed
 
     # perform sync only when you have at least MIN_N records of data
-    MIN_N = 200
+    MIN_N = 15
     if len(collections) < MIN_N:
         return
 
