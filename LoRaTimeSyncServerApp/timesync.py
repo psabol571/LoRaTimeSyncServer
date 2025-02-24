@@ -101,8 +101,6 @@ def perform_sync(dev_eui):
 
     logger.info("existing_model is not None: ")
     logger.info(existing_model is not None)
-    logger.info(existing_model.created_at)
-    logger.info(sync_init.created_at)
 
     # for now perform sync only once
     if existing_model is not None:
