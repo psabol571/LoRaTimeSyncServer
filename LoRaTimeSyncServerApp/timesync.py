@@ -122,12 +122,12 @@ def perform_sync(dev_eui):
         # tolerance = 0.2 * 1e9
         # if abs(offset) < tolerance:
         #     return
-        
+
         # send offset after first uplink
         return f's,{int(offset)}'  # You can log this or handle it as needed
 
     # perform sync only when you have at least MIN_N records of data
-    MIN_N = 15
+    MIN_N = 300
     if len(collections) < MIN_N:
         return
 
