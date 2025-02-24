@@ -6,6 +6,9 @@ from .models import TimeSyncInit, TimeCollection, TimeSyncModels
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
+import logging
+logger = logging.getLogger('django')
+
 
 def initTimeSync(dev_eui, period, now):
     reserve = 3
@@ -81,15 +84,23 @@ def createModelV3(collections, first_received):
 
 def perform_sync(dev_eui):
 
+    logger.info("Perform sync")
+
     # Get the last TimeSyncInit record 
     sync_init = TimeSyncInit.objects.filter(
         dev_eui=dev_eui,
     ).order_by('-created_at').first()
 
+    logger.info("Sync init is None: ")
+    logger.info(sync_init is None)
+
     if sync_init is None:
         return
 
     existing_model = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at)
+
+    logger.info("existing_model is not None: ")
+    logger.info(existing_model is not None)
 
     # for now perform sync only once
     if existing_model is not None:
@@ -97,6 +108,9 @@ def perform_sync(dev_eui):
 
     # Fetch TimeCollection data for the specified dev_eui with time_expected greater than the first_uplink_expected
     collections = TimeCollection.objects.filter(dev_eui=dev_eui, time_expected__gt=sync_init.first_uplink_expected).order_by('time_received')
+
+    logger.info("Collections length")
+    logger.info(len(collections))
 
     if len(collections) == 1:
         # Calculate the offset for the first uplink

@@ -55,6 +55,9 @@ def receive_uplink(request):
         else:
             saveTimeCollection(dev_eui, now, time_received)
             downlink_data = perform_sync(dev_eui)
+
+            logger.info("downlink data")
+            logger.info(downlink_data)
             
             # if model is created, send synchronization downlink
             if downlink_data is not None:
