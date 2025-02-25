@@ -12,7 +12,7 @@ from google.protobuf.json_format import Parse
 # Create your views here.
 from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit, TimeSyncModels
-from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModel, createModelV2, createModelV3
+from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModelV2
 
 import logging
 logger = logging.getLogger('django')
@@ -355,20 +355,7 @@ def test_model(request):
 
     first_received = collections[0].time_received
 
-    model = createModel(collections, first_received)
-
     model2 = createModelV2(collections, first_received)
-
-    model3 = createModelV3(collections, first_received)
-
-    timeSync1 = {
-        'a': model.coef_[0],
-        'b': model.intercept_,
-        'P': sync_init.period * 1e9 * model.coef_[0],
-        'p_micro': int(sync_init.period * 1e9 * model.coef_[0] / 1e3),
-        'a_recreated': int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period / 1e6,
-        'pmicro2': int(sync_init.period * 1e9 * (int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period / 1e6) / 1e3)
-    }
 
     timeSync2 = {
         'a': model2.coef_[0],
@@ -378,18 +365,9 @@ def test_model(request):
         'p_micro': int(sync_init.period * 1e9 * model2.coef_[0] / 1e3),
     }
 
-    timeSync3 = {
-        'a': model3.coef_[0],
-        'b': model3.intercept_,
-        'a-1': (model3.coef_[0] - 1) * sync_init.period,
-        'P': sync_init.period * 1e9 * model3.coef_[0],
-        'p_micro': int(sync_init.period * 1e9 * model3.coef_[0] / 1e3),
-    }
-
     return HttpResponse(json.dumps({
-        '1': timeSync1,
-        '2': timeSync2,
-        '3': timeSync3
+        'model': timeSync2,
+        'count': len(collections),
     }))
 
 
@@ -422,7 +400,7 @@ def time_difference_graph_synced(request):
 
     ##############
     first_received = collections[0].time_received
-    model = createModel(collections, first_received)
+    model = createModelV2(collections, first_received)
     sync_response = {
         'a': model.coef_[0],
         'b': model.intercept_,
