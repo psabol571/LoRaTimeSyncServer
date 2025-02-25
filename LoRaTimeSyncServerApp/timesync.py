@@ -47,17 +47,6 @@ def saveTimeCollection(dev_eui, device_time, time_received):
     return time_collection
 
 
-def createModel(collections, first_received):
-    # Prepare data for linear regression
-    X = np.array([c.time_expected - first_received for c in collections]).reshape(-1, 1)
-    y = np.array([c.time_received - first_received for c in collections])
-
-    # Perform linear regression
-    model = LinearRegression()
-    model.fit(X, y)
-
-    return model
-
 
 def createModelV2(collections, first_received):
     # Prepare data for linear regression
@@ -70,16 +59,6 @@ def createModelV2(collections, first_received):
 
     return model
 
-def createModelV3(collections, first_received):
-    # Prepare data for linear regression
-    X = np.array([c.time_received for c in collections]).reshape(-1, 1)
-    y = np.array([c.time_expected for c in collections])
-
-    # Perform linear regression
-    model = LinearRegression()
-    model.fit(X, y)
-
-    return model
 
 
 def perform_sync(dev_eui):
@@ -119,22 +98,19 @@ def perform_sync(dev_eui):
 
         logger.info(f"offset {offset}")
 
-        # tolerance = 0.2 * 1e9
-        # if abs(offset) < tolerance:
-        #     return
-
         # send offset after first uplink
-        return f's,{int(offset)}'  # You can log this or handle it as needed
+        return f's,{int(offset)}'
 
     # perform sync only when you have at least MIN_N records of data
     MIN_N = 300
     if len(collections) < MIN_N:
         return
 
-    model = createModelV2(collections, collections[0].time_received)
+    # remove first 2 unsynced outlier uplinks
+    model = createModelV2(collections[2:], collections[2].time_received)
 
     new_period_ns = int(sync_init.period * 1e9 * model.coef_[0])
-    new_period_ms = int(new_period_ns / 1e3)
+    new_period_ms = int((new_period_ns + 500) / 1e3)
 
     # Save the model parameters
     model = TimeSyncModels.objects.create(
