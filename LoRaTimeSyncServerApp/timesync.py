@@ -121,7 +121,11 @@ def perform_sync(dev_eui):
         new_period_ns=new_period_ns,
     )
 
-    return f's,{int(model.b)},{model.new_period_ns}'
+    
+    last_collection = collections[len(collections) - 1]
+    offset = last_collection.time_expected - last_collection.time_received
+
+    return f's,{int(offset)},{model.new_period_ns}'
 
 
 
