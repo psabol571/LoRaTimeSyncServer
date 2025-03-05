@@ -19,15 +19,9 @@ from django.urls import path
 from LoRaTimeSyncServerApp import views
 
 urlpatterns = [
-    # path('admin/', admin.site.urls),
     path('uplink', views.receive_uplink),
-    # path('test_init', views.test_init),
-    # path('test', views.test_receive),
-    # path('test_sync', views.test_sync),
-    # path('test_host', views.test_host),
-    path('graph-time-diff', views.time_difference_graph_v2),
-    path('graph-time-diff_v3', views.time_difference_graph_v3),
-    path('graph-time-diff_v4', views.time_difference_graph_v4),
+    path('graph-time-diff', views.time_difference_graph),
+    path('graph-time-diff_v2', views.time_difference_graph_v2),
     path('test_model', views.test_model),
     path('test_existing_model', views.test_existing_model),
     path('time_difference_graph_synced', views.time_difference_graph_synced),
