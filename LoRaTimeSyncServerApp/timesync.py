@@ -1,7 +1,7 @@
 import time
 
 from django.utils import timezone
-from django.db.models import F
+from django.db.models import F, Q
 from datetime import timedelta
 from .models import TimeSyncInit, TimeCollection, TimeSyncModels
 from sklearn.linear_model import LinearRegression
@@ -115,9 +115,11 @@ def existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL):
     # Get collections 
     collections = TimeCollection.objects.filter(
         dev_eui=existing_model.dev_eui,
-        time_received__gt=existing_model.created_at, # after the last model creation
-        time_received__gt=F('time_expected') - 1000000000 # error (received - expected) > - 1 second (filters out deep sleep outliers)
+        Q(time_received__gt=existing_model.created_at) & # after the last model creation
+        Q(time_received__gt=F('time_expected') - 1000000000) # error (received - expected) > - 1 second (filters out deep sleep outliers)
     ).order_by('time_received')
+
+    logger.info(f"existingModelSync - collections lenght: {len(collections)}")
 
     # immediately sync propagation delay after first uplink
     if len(collections) == 1:
