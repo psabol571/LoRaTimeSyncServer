@@ -62,24 +62,16 @@ def createModel(collections, first_received):
 
 
 def perform_sync(dev_eui):
-
-    logger.info("Perform sync")
-
     # Get the last TimeSyncInit record 
     sync_init = TimeSyncInit.objects.filter(
         dev_eui=dev_eui,
     ).order_by('-created_at').first()
-
-    logger.info("Sync init is None: ")
-    logger.info(sync_init is None)
 
     if sync_init is None:
         return
 
     existing_model = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at).first()
 
-    logger.info("existing_model is not None: ")
-    logger.info(existing_model is not None)
 
     # for now perform sync only once
     if existing_model is not None:
@@ -88,15 +80,11 @@ def perform_sync(dev_eui):
     # Fetch TimeCollection data for the specified dev_eui with time_expected greater than the first_uplink_expected
     collections = TimeCollection.objects.filter(dev_eui=dev_eui, time_expected__gte=sync_init.first_uplink_expected).order_by('time_received')
 
-    logger.info("Collections length")
-    logger.info(len(collections))
 
     if len(collections) == 1:
         # Calculate the offset for the first uplink
         first_collection = collections[0]
         offset = first_collection.time_expected - first_collection.time_received
-
-        logger.info(f"offset {offset}")
 
         # send offset after first uplink
         return f's,{int(offset)}'
