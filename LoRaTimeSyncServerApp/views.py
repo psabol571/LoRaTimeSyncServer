@@ -23,13 +23,10 @@ def unmarshal(body, pl):
 
 
 def uplink_data_to_json(hex_bytes):
-    hex_string = hex_bytes.decode('utf-8')
-    # logger.info('hex_string')
-    # logger.info(hex_string)
     try:
+        hex_string = hex_bytes.decode('utf-8')
         return json.loads(hex_string)
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to decode JSON")
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
         return None
 
 
