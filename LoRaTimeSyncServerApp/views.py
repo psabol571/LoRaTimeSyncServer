@@ -208,7 +208,7 @@ def time_difference_graph_v2(request):
 
         filtered_data = [(c.time_expected - sync_init.first_uplink_expected, c.time_expected - c.time_received) 
                      for c in collections 
-                     if (c.time_expected - c.time_received) > -1]
+                     if (c.time_expected - c.time_received) > -1 * 1e9]
 
         # x_values represents minutes now
         x_values = [(x[0]) / (60 * 1e9) for x in filtered_data]
