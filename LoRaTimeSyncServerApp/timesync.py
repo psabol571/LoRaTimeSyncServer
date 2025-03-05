@@ -1,6 +1,7 @@
 import time
 
 from django.utils import timezone
+from django.db.models import F
 from datetime import timedelta
 from .models import TimeSyncInit, TimeCollection, TimeSyncModels
 from sklearn.linear_model import LinearRegression
@@ -60,44 +61,11 @@ def createModel(collections, first_received):
     return model
 
 
+def createModelFromCollections(collections, dev_eui, old_period):
+    # create linear regression model
+    model = createModel(collections, collections[0].time_received)
 
-def perform_sync(dev_eui):
-    # Get the last TimeSyncInit record 
-    sync_init = TimeSyncInit.objects.filter(
-        dev_eui=dev_eui,
-    ).order_by('-created_at').first()
-
-    if sync_init is None:
-        return
-
-    existing_model = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at).first()
-
-
-    # for now perform sync only once
-    if existing_model is not None:
-        return
-
-    # Fetch TimeCollection data for the specified dev_eui with time_expected greater than the first_uplink_expected
-    collections = TimeCollection.objects.filter(dev_eui=dev_eui, time_expected__gte=sync_init.first_uplink_expected).order_by('time_received')
-
-
-    if len(collections) == 1:
-        # Calculate the offset for the first uplink
-        first_collection = collections[0]
-        offset = first_collection.time_expected - first_collection.time_received
-
-        # send offset after first uplink
-        return f's,{int(offset)}'
-
-    # perform sync only when you have at least MIN_N records of data
-    MIN_N = 300
-    if len(collections) < MIN_N:
-        return
-
-    # remove first 2 unsynced outlier uplinks
-    model = createModel(collections[2:], collections[2].time_received)
-
-    new_period_ns = int(sync_init.period * 1e9 * model.coef_[0])
+    new_period_ns = int(old_period * 1e9 * model.coef_[0])
     new_period_ms = int((new_period_ns + 500) / 1e3)
 
     # Save the model parameters
@@ -108,12 +76,88 @@ def perform_sync(dev_eui):
         new_period_ms=new_period_ms,
         new_period_ns=new_period_ns,
     )
-
     
     last_collection = collections[len(collections) - 1]
     offset = last_collection.time_expected - last_collection.time_received
 
     return f's,{int(offset)},{model.new_period_ns}'
+
+
+def syncAfterFirstUplink(collections):
+    # Calculate the offset for the first uplink
+    first_collection = collections[0]
+    offset = first_collection.time_expected - first_collection.time_received
+
+    # send offset after first uplink
+    return f's,{int(offset)}'
+
+
+def nonExistingModelSync(sync_init, MIN_N):
+    # Get collections after the first uplink
+    collections = TimeCollection.objects.filter(
+        dev_eui=sync_init.dev_eui, 
+        time_expected__gte=sync_init.first_uplink_expected
+    ).order_by('time_received')
+
+    # immediately sync propagation delay after first uplink
+    if len(collections) == 1:
+        return syncAfterFirstUplink(collections)
+
+    # perform sync on clockdrift only when you have at least MIN_N records of data
+    if len(collections) < MIN_N:
+        return
+
+    # remove first 2 unsynced outlier uplinks
+    return createModelFromCollections(collections[2:], sync_init.dev_eui, sync_init.period)
+
+
+def existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL):
+    # Get collections 
+    collections = TimeCollection.objects.filter(
+        dev_eui=existing_model.dev_eui,
+        time_received__gt=existing_model.created_at, # after the last model creation
+        time_received__gt=F('time_expected') - 1000000000 # error (received - expected) > - 1 second (filters out deep sleep outliers)
+    ).order_by('time_received')
+
+    # immediately sync propagation delay after first uplink
+    if len(collections) == 1:
+        return syncAfterFirstUplink(collections)
+
+    # Check if MIN_HOURS_FOR_NEW_MODEL hours have passed since last model creation
+    time_since_last_model = timezone.now() - existing_model.created_at
+    if time_since_last_model < timedelta(hours=MIN_HOURS_FOR_NEW_MODEL):
+        return
+        
+    # perform sync on clockdrift only when you have at least MIN_N records of data
+    if len(collections) < MIN_N:
+        return
+
+    return createModelFromCollections(collections, existing_model.dev_eui, existing_model.period)
+
+
+def perform_sync(dev_eui):
+    # adjust parameters as needed
+    MIN_N = 300
+    MIN_HOURS_FOR_NEW_MODEL = 24
+
+    # Get the last TimeSyncInit record 
+    sync_init = TimeSyncInit.objects.filter(
+        dev_eui=dev_eui,
+    ).order_by('-created_at').first()
+
+    if sync_init is None:
+        return
+
+    # Get the last TimeSyncModels record created after first TimeSyncInit
+    existing_model = TimeSyncModels.objects.filter(
+        dev_eui=dev_eui, created_at__gte=sync_init.created_at
+    ).order_by('-created_at').first()
+
+    if existing_model is None:
+        return nonExistingModelSync(sync_init, MIN_N)
+    else:
+        return existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL)
+
 
 
 
