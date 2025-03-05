@@ -73,6 +73,7 @@ def createModelFromCollections(collections, dev_eui, old_period):
         dev_eui=dev_eui,
         a=model.coef_[0],
         b=model.intercept_,
+        last_collection_time_received=collections[len(collections) - 1].time_received,
         new_period_ms=new_period_ms,
         new_period_ns=new_period_ns,
     )
@@ -115,7 +116,7 @@ def existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL):
     # Get collections 
     collections = TimeCollection.objects.filter(
         dev_eui=existing_model.dev_eui,
-        time_received__gt=existing_model.created_at, # after the last model creation
+        time_received__gt=existing_model.last_collection_time_received, # after the last model creation
         time_expected__lt=F('time_received') + 1000000000 # error (received - expected) > - 1 second (filters out deep sleep outliers)
     ).order_by('time_received')
 
@@ -145,15 +146,15 @@ def perform_sync(dev_eui):
     # Get the last TimeSyncInit record 
     sync_init = TimeSyncInit.objects.filter(
         dev_eui=dev_eui,
-    ).order_by('-created_at').first()
+    ).last()
 
     if sync_init is None:
         return
 
     # Get the last TimeSyncModels record created after first TimeSyncInit
     existing_model = TimeSyncModels.objects.filter(
-        dev_eui=dev_eui, created_at__gte=sync_init.created_at
-    ).order_by('-created_at').first()
+        dev_eui=dev_eui, created_at__gt=sync_init.created_at
+    ).last()
 
     if existing_model is None:
         return nonExistingModelSync(sync_init, MIN_N)
