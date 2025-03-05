@@ -12,7 +12,7 @@ from google.protobuf.json_format import Parse
 # Create your views here.
 from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit, TimeSyncModels
-from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModelV2
+from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModel
 
 import logging
 logger = logging.getLogger('django')
@@ -260,7 +260,7 @@ def test_model(request):
 
     first_received = collections[0].time_received
 
-    model2 = createModelV2(collections, first_received)
+    model2 = createModel(collections, first_received)
 
     timeSync2 = {
         'a': model2.coef_[0],
@@ -305,7 +305,7 @@ def time_difference_graph_synced(request):
 
     ##############
     first_received = collections[0].time_received
-    model = createModelV2(collections, first_received)
+    model = createModel(collections, first_received)
     sync_response = {
         'a': model.coef_[0],
         'b': model.intercept_,

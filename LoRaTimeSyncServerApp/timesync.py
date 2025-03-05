@@ -48,7 +48,7 @@ def saveTimeCollection(dev_eui, device_time, time_received):
 
 
 
-def createModelV2(collections, first_received):
+def createModel(collections, first_received):
     # Prepare data for linear regression
     X = np.array([c.time_received - first_received for c in collections]).reshape(-1, 1)
     y = np.array([c.time_expected - first_received for c in collections])
@@ -107,7 +107,7 @@ def perform_sync(dev_eui):
         return
 
     # remove first 2 unsynced outlier uplinks
-    model = createModelV2(collections[2:], collections[2].time_received)
+    model = createModel(collections[2:], collections[2].time_received)
 
     new_period_ns = int(sync_init.period * 1e9 * model.coef_[0])
     new_period_ms = int((new_period_ns + 500) / 1e3)
