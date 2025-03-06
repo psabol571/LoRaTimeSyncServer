@@ -122,6 +122,17 @@ def nonExistingModelSync(sync_init, MIN_N):
 
 
 def existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL):
+    
+    
+    # # immediately sync propagation delay after first uplink
+    # if len(collections) == 1:
+    #     return syncAfterFirstUplink(collections)
+
+    # Check if MIN_HOURS_FOR_NEW_MODEL hours have passed since last model creation
+    time_since_last_model = timezone.now() - existing_model.created_at
+    if time_since_last_model < timedelta(hours=MIN_HOURS_FOR_NEW_MODEL):
+        return
+
     # Get collections 
     collections = TimeCollection.objects.filter(
         dev_eui=existing_model.dev_eui,
@@ -130,15 +141,6 @@ def existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL):
     ).order_by('time_received')
 
     logger.info(f"existingModelSync - collections lenght: {len(collections)}")
-
-    # immediately sync propagation delay after first uplink
-    if len(collections) == 1:
-        return syncAfterFirstUplink(collections)
-
-    # Check if MIN_HOURS_FOR_NEW_MODEL hours have passed since last model creation
-    time_since_last_model = timezone.now() - existing_model.created_at
-    if time_since_last_model < timedelta(hours=MIN_HOURS_FOR_NEW_MODEL):
-        return
         
     # perform sync on clockdrift only when you have at least MIN_N records of data
     if len(collections) < MIN_N:
