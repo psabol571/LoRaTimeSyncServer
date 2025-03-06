@@ -109,7 +109,7 @@ def test_existing_model(request):
     unix_from = time_from.timestamp() * 1e9
     unix_to = time_to.timestamp() * 1e9
 
-    existing_model = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=time_from, created_at__lte=time_to).first()
+    existing_model = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=time_from, created_at__lte=time_to).last()
 
     if existing_model is None:
         return HttpResponse(json.dumps({
