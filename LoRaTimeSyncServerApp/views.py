@@ -109,19 +109,19 @@ def test_existing_model(request):
     unix_from = time_from.timestamp() * 1e9
     unix_to = time_to.timestamp() * 1e9
 
-    # Get the last TimeSyncInit record for this experiment
-    sync_init = TimeSyncInit.objects.filter(
-        dev_eui=dev_eui,
-        created_at__lte=time_to
-    ).order_by('-created_at').first()
+    existing_model = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=time_from, created_at__lte=time_to).first()
 
-    existing_model = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at).first()
+    if existing_model is None:
+        return HttpResponse(json.dumps({
+            'error': 'No model found for the specified device and time range'
+        }), status=404)
 
     return HttpResponse(json.dumps({
-        'a' : existing_model.a,
+        'a': existing_model.a,
         'b': existing_model.b,
         'new_period_ns': existing_model.new_period_ns,
         'new_period_ms': existing_model.new_period_ms,
+        'created_at': existing_model.created_at
     }))
 
 
