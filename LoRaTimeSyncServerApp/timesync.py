@@ -61,11 +61,11 @@ def createModel(collections, first_received):
     return model
 
 
-def createModelFromCollections(collections, dev_eui, old_period):
+def createModelFromCollections(collections, dev_eui, old_period_ns):
     # create linear regression model
     model = createModel(collections, collections[0].time_received)
 
-    new_period_ns = int(old_period * 1e9 * model.coef_[0])
+    new_period_ns = int(old_period_ns * model.coef_[0])
     new_period_ms = int((new_period_ns + 500) / 1e3)
 
     # Save the model parameters
@@ -78,8 +78,17 @@ def createModelFromCollections(collections, dev_eui, old_period):
         new_period_ns=new_period_ns,
     )
     
-    last_collection = collections[len(collections) - 1]
-    offset = last_collection.time_expected - last_collection.time_received
+    # offset can be calculated as accumulated error over the period passed + model.b
+
+    # calculate accumulated error over the period passed
+    time_diff_ns = collections[len(collections) - 1].time_expected - collections[0].time_expected
+    # periods_passed = round(time_diff_ns / old_period_ns)
+    # accumulated_error = (new_period_ns - old_period_ns) * periods_passed
+    # accumulated_error = (old_period_ns - old_period_ns * model.coef_[0]) * periods_passed
+    # accumulated_error = olr_period_ns * (1 - model.a) * periods_passed
+    # accumulated_error = old_period_ns * (1 - model.a) * time_diff_ns / old_period_ns
+    accumulated_error = time_diff_ns * (1 - model.a)
+    offset = accumulated_error + model.b
 
     return f's,{int(offset)},{model.new_period_ns}'
 
@@ -109,7 +118,7 @@ def nonExistingModelSync(sync_init, MIN_N):
         return
 
     # remove first 2 unsynced outlier uplinks
-    return createModelFromCollections(collections[2:], sync_init.dev_eui, sync_init.period)
+    return createModelFromCollections(collections[2:], sync_init.dev_eui, sync_init.period * 1e9)
 
 
 def existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL):
@@ -135,7 +144,7 @@ def existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL):
     if len(collections) < MIN_N:
         return
 
-    return createModelFromCollections(collections, existing_model.dev_eui, existing_model.period)
+    return createModelFromCollections(collections, existing_model.dev_eui, existing_model.new_period_ms * 1e3)
 
 
 def perform_sync(dev_eui):
