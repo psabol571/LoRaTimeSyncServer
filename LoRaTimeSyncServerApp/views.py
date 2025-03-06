@@ -121,7 +121,6 @@ def test_existing_model(request):
         'b': existing_model.b,
         'new_period_ns': existing_model.new_period_ns,
         'new_period_ms': existing_model.new_period_ms,
-        'created_at': existing_model.created_at
     }))
 
 
