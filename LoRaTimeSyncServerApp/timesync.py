@@ -86,7 +86,7 @@ def createModelFromCollections(collections, dev_eui, old_period_ns):
         a=model.coef_[0],
         b=model.intercept_,
         last_collection_time_received=collections[len(collections) - 1].time_received,
-        new_period_ms=offset,
+        new_period_ms=int(offset),
         new_period_ns=new_period_ns,
     )
 
