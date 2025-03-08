@@ -67,16 +67,6 @@ def createModelFromCollections(collections, dev_eui, old_period_ns):
 
     new_period_ns = int(old_period_ns * model.coef_[0])
     new_period_ms = int((new_period_ns + 500) / 1e3)
-
-    # Save the model parameters
-    model = TimeSyncModels.objects.create(
-        dev_eui=dev_eui,
-        a=model.coef_[0],
-        b=model.intercept_,
-        last_collection_time_received=collections[len(collections) - 1].time_received,
-        new_period_ms=new_period_ms,
-        new_period_ns=new_period_ns,
-    )
     
     # offset can be calculated as accumulated error over the period passed + model.b
 
@@ -87,8 +77,18 @@ def createModelFromCollections(collections, dev_eui, old_period_ns):
     # accumulated_error = (old_period_ns - old_period_ns * model.coef_[0]) * periods_passed
     # accumulated_error = olr_period_ns * (1 - model.a) * periods_passed
     # accumulated_error = old_period_ns * (1 - model.a) * time_diff_ns / old_period_ns
-    accumulated_error = time_diff_ns * (1 - model.a)
-    offset = accumulated_error + model.b
+    accumulated_error = time_diff_ns * (1 - model.coef_[0])
+    offset = accumulated_error + model.intercept_
+
+    # Save the model parameters
+    model = TimeSyncModels.objects.create(
+        dev_eui=dev_eui,
+        a=model.coef_[0],
+        b=model.intercept_,
+        last_collection_time_received=collections[len(collections) - 1].time_received,
+        new_period_ms=offset,
+        new_period_ns=new_period_ns,
+    )
 
     return f's,{int(offset)},{model.new_period_ns}'
 
