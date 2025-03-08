@@ -74,10 +74,10 @@ def createModelFromCollections(collections, dev_eui, old_period_ns):
     time_diff_ns = collections[len(collections) - 1].time_expected - collections[0].time_expected
     # periods_passed = round(time_diff_ns / old_period_ns)
     # accumulated_error = (new_period_ns - old_period_ns) * periods_passed
-    # accumulated_error = (old_period_ns - old_period_ns * model.coef_[0]) * periods_passed
-    # accumulated_error = olr_period_ns * (1 - model.a) * periods_passed
-    # accumulated_error = old_period_ns * (1 - model.a) * time_diff_ns / old_period_ns
-    accumulated_error = time_diff_ns * (1 - model.coef_[0])
+    # accumulated_error = (old_period_ns * model.coef_[0] - old_period_ns) * periods_passed
+    # accumulated_error = old_period_ns * (model.coef_[0] - 1) * periods_passed
+    # accumulated_error = old_period_ns * (model.coef_[0] - 1) * time_diff_ns / old_period_ns
+    accumulated_error = time_diff_ns * (model.coef_[0] - 1)
     offset = accumulated_error + model.intercept_
 
     # Save the model parameters
@@ -86,7 +86,7 @@ def createModelFromCollections(collections, dev_eui, old_period_ns):
         a=model.coef_[0],
         b=model.intercept_,
         last_collection_time_received=collections[len(collections) - 1].time_received,
-        new_period_ms=int(offset),
+        new_period_ms=new_period_ms,
         new_period_ns=new_period_ns,
     )
 
