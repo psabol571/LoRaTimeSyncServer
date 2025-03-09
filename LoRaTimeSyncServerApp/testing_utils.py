@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from django.utils import timezone
 from datetime import timedelta
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit
+from django.db.models import F
 
 def create_time_difference_plot(x_values, time_diffs, time_from, time_to):
     plt.figure(figsize=(10, 6))
