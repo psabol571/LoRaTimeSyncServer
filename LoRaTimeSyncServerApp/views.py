@@ -85,7 +85,9 @@ def test_existing_model(request):
 @csrf_exempt
 def time_difference_graph(request):
     dev_eui, time_from, time_to, unix_from, unix_to = get_time_range_params(request)
-    sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to)
+    error_greater_than_seconds = request.GET.get('e', None)
+    remove_outliers = request.GET.get('o', False)
+    sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_seconds, remove_outliers)
 
     if collections and sync_init:
         # x_values represents minutes now
