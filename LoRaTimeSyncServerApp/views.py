@@ -101,16 +101,12 @@ def time_difference_graph(request):
 @csrf_exempt
 def time_difference_graph_v2(request):
     dev_eui, time_from, time_to, unix_from, unix_to = get_time_range_params(request)
-    sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to)
+    error_greater_than_seconds = request.GET.get('e', -1)
+    sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_seconds)
 
     if collections and sync_init:
-        filtered_data = [(c.time_expected - sync_init.first_uplink_expected, c.time_expected - c.time_received) 
-                     for c in collections 
-                     if (c.time_expected - c.time_received) > -1 * 1e9]
-
-        # x_values represents minutes now
-        x_values = [(x[0]) / (60 * 1e9) for x in filtered_data]
-        time_diffs = [x[1] / 1e9 for x in filtered_data]
+        x_values = [(c.time_expected - sync_init.first_uplink_expected) / (60 * 1e9) for c in collections]
+        time_diffs = [(c.time_expected - c.time_received) / 1e9 for c in collections]
 
         plot_data = create_time_difference_plot(x_values, time_diffs, time_from, time_to)
         return HttpResponse(plot_data, content_type='image/png')
@@ -121,7 +117,8 @@ def time_difference_graph_v2(request):
 @csrf_exempt
 def test_model(request):
     dev_eui, time_from, time_to, unix_from, unix_to = get_time_range_params(request)
-    sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to)
+    error_greater_than_seconds = request.GET.get('e', None)
+    sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_seconds)
 
     if not collections or len(collections) == 0:
         return HttpResponse(json.dumps({

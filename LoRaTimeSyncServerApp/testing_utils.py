@@ -35,7 +35,7 @@ def get_time_range_params(request, default_days=7):
     
     return dev_eui, time_from, time_to, unix_from, unix_to
 
-def get_sync_data(dev_eui, time_to, unix_from, unix_to):
+def get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_seconds=None):
     # Get the last TimeSyncInit record for this experiment
     sync_init = TimeSyncInit.objects.filter(
         dev_eui=dev_eui,
@@ -43,9 +43,16 @@ def get_sync_data(dev_eui, time_to, unix_from, unix_to):
     ).order_by('-created_at').first()
 
     # Fetch TimeCollection data
-    collections = TimeCollection.objects.filter(
-        dev_eui=dev_eui,
-        time_received__range=(unix_from, unix_to)
-    ).order_by('time_received')
+    if error_greater_than_seconds is None:
+        collections = TimeCollection.objects.filter(
+            dev_eui=dev_eui,
+            time_received__range=(unix_from, unix_to)
+        ).order_by('time_received')
+    else:
+        collections = TimeCollection.objects.filter(
+            dev_eui=dev_eui,
+            time_received__range=(unix_from, unix_to),
+            time_expected__gt=F('time_received') + error_greater_than_seconds * 1000000000 # error (expected - received) > - 1 second (filters out deep sleep outliers)
+        ).order_by('time_received')
     
     return sync_init, collections
