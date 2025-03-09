@@ -118,7 +118,8 @@ def time_difference_graph_v2(request):
 def test_model(request):
     dev_eui, time_from, time_to, unix_from, unix_to = get_time_range_params(request)
     error_greater_than_seconds = request.GET.get('e', None)
-    sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_seconds)
+    remove_outliers = request.GET.get('o', False)
+    sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_seconds, remove_outliers)
 
     if not collections or len(collections) == 0:
         return HttpResponse(json.dumps({

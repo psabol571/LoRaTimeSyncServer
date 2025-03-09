@@ -2,6 +2,8 @@ import io
 import matplotlib.pyplot as plt
 from django.utils import timezone
 from datetime import timedelta
+import numpy as np
+from scipy import stats
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit
 
 def create_time_difference_plot(x_values, time_diffs, time_from, time_to):
@@ -35,7 +37,27 @@ def get_time_range_params(request, default_days=7):
     
     return dev_eui, time_from, time_to, unix_from, unix_to
 
-def get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_seconds=None):
+def filter_time_diff_outliers(collections, method='iqr'):
+    if not collections:
+        return collections
+        
+    # Calculate time differences in nanoseconds
+    time_diffs = np.array([c.time_expected - c.time_received for c in collections])
+    
+    # Calculate IQR bounds
+    q1 = np.percentile(time_diffs, 25)
+    q3 = np.percentile(time_diffs, 75)
+    iqr = q3 - q1
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+    
+    # Filter collections based on bounds
+    filtered_collections = [c for c in collections 
+                          if lower_bound <= (c.time_expected - c.time_received) <= upper_bound]
+    
+    return filtered_collections
+
+def get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_seconds=None, remove_outliers=False):
     # Get the last TimeSyncInit record for this experiment
     sync_init = TimeSyncInit.objects.filter(
         dev_eui=dev_eui,
@@ -50,5 +72,9 @@ def get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_secon
 
     if error_greater_than_seconds is not None:
         collections = [c for c in collections if (c.time_expected - c.time_received) > int(float(error_greater_than_seconds) * 1e9)]
+    
+    # Remove outliers if requested
+    if remove_outliers:
+        collections = filter_time_diff_outliers(collections)
     
     return sync_init, collections
