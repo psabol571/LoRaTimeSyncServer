@@ -137,7 +137,7 @@ def existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL):
     collections = TimeCollection.objects.filter(
         dev_eui=existing_model.dev_eui,
         time_received__gt=existing_model.last_collection_time_received, # after the last model creation
-        time_expected__lt=F('time_received') + 1000000000 # error (received - expected) > - 1 second (filters out deep sleep outliers)
+        time_expected__gt=F('time_received') - 1000000000 # error (expected - received) > - 1 second (filters out deep sleep outliers)
     ).order_by('time_received')
 
     logger.info(f"existingModelSync - collections lenght: {len(collections)}")
@@ -170,7 +170,7 @@ def perform_sync(dev_eui):
     if existing_model is None:
         return nonExistingModelSync(sync_init, MIN_N)
     else:
-        return existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL)
+        return # existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL)
 
 
 
