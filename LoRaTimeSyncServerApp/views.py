@@ -9,10 +9,12 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from google.protobuf.json_format import Parse
+from datetime import timedelta
 # Create your views here.
 from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit, TimeSyncModels
 from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModel
+from LoRaTimeSyncServerApp.testing_utils import create_time_difference_plot, get_time_range_params, get_sync_data
 
 import logging
 logger = logging.getLogger('django')
@@ -61,53 +63,9 @@ def receive_uplink(request):
     return HttpResponse('uplink')
 
 
-
-@csrf_exempt
-def test_receive(request: WSGIRequest):
-    now = time.time_ns()
-    saveTimeCollection('test_dev_eui', now, now)
-    return HttpResponse(json.dumps(request.POST))
-
-
-
-@csrf_exempt
-def test_init(request: WSGIRequest):
-    now = time.time_ns()
-    now = initTimeSync('test_dev_eui', 120, now)
-
-    resp = json.dumps({
-        'a': str(now),
-    #     'b': now.second,
-    #    'ms': now.microsecond,
-        'ns': time.time_ns(),
-    })
-    return HttpResponse(resp)
-
-
-@csrf_exempt
-def test_sync(request: WSGIRequest):
-    perform_sync('test_dev_eui')
-
-    return HttpResponse('hi')
-
-@csrf_exempt
-def test_host(request: WSGIRequest):
-    return HttpResponse(settings.HOST)
-
-
 @csrf_exempt
 def test_existing_model(request):
-    dev_eui = request.GET.get('dev_eui', '')
-    time_from = request.GET.get('time_from', '')
-    time_to = request.GET.get('time_to', '')
-
-    #  Convert time strings to datetime objects
-    time_from = timezone.datetime.fromisoformat(time_from) if time_from else timezone.now() - timedelta(days=7)
-    time_to = timezone.datetime.fromisoformat(time_to) if time_to else timezone.now()
-
-    #  Convert datetime to Unix timestamp in nanoseconds
-    unix_from = time_from.timestamp() * 1e9
-    unix_to = time_to.timestamp() * 1e9
+    dev_eui, time_from, time_to, unix_from, unix_to = get_time_range_params(request)
 
     existing_model = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=time_from, created_at__lte=time_to).last()
 
@@ -124,84 +82,28 @@ def test_existing_model(request):
     }))
 
 
-# example usage: localhost:8000/graph-time-diff?time_from=2023-01-01T00:00:00&time_to=2023-12-31T23:59:59&dev_eui=test_dev_eui
 @csrf_exempt
 def time_difference_graph(request):
-    dev_eui = request.GET.get('dev_eui', '')
-    time_from = request.GET.get('time_from', '')
-    time_to = request.GET.get('time_to', '')
-
-    #  Convert time strings to datetime objects
-    time_from = timezone.datetime.fromisoformat(time_from) if time_from else timezone.now() - timedelta(days=7)
-    time_to = timezone.datetime.fromisoformat(time_to) if time_to else timezone.now()
-
-    #  Convert datetime to Unix timestamp in nanoseconds
-    unix_from = time_from.timestamp() * 1e9
-    unix_to = time_to.timestamp() * 1e9
-
-    # Get the last TimeSyncInit record for this experiment
-    sync_init = TimeSyncInit.objects.filter(
-        dev_eui=dev_eui,
-        created_at__lte=time_to
-    ).order_by('-created_at').first()
-
-    # Fetch TimeCollection data
-    collections = TimeCollection.objects.filter(
-        dev_eui=dev_eui,
-        time_received__range=(unix_from, unix_to)
-    ).order_by('time_received')
+    dev_eui, time_from, time_to, unix_from, unix_to = get_time_range_params(request)
+    sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to)
 
     if collections and sync_init:
         # x_values represents minutes now
         x_values = [(c.time_expected - sync_init.first_uplink_expected) / (60 * 1e9) for c in collections]
         time_diffs = [(c.time_expected - c.time_received) / 1e9 for c in collections]
 
-        plt.figure(figsize=(10, 6))
-        plt.plot(x_values, time_diffs, 'bo-')
-        plt.xlabel('Čas (minúty)')
-        plt.ylabel('Časový rozdiel T0-t0 (sekundy)')
-        plt.title(f'{time_from} - {time_to}')
-        plt.grid(True)
-
-        # Save the plot to a buffer
-        buffer = io.BytesIO()
-        plt.savefig(buffer, format='png')
-        buffer.seek(0)
-        plt.close()
-
-        return HttpResponse(buffer.getvalue(), content_type='image/png')
+        plot_data = create_time_difference_plot(x_values, time_diffs, time_from, time_to)
+        return HttpResponse(plot_data, content_type='image/png')
     
     return HttpResponse("No data available", content_type='text/plain')
 
 
 @csrf_exempt
 def time_difference_graph_v2(request):
-    dev_eui = request.GET.get('dev_eui', '')
-    time_from = request.GET.get('time_from', '')
-    time_to = request.GET.get('time_to', '')
-
-    #  Convert time strings to datetime objects
-    time_from = timezone.datetime.fromisoformat(time_from) if time_from else timezone.now() - timedelta(days=7)
-    time_to = timezone.datetime.fromisoformat(time_to) if time_to else timezone.now()
-
-    #  Convert datetime to Unix timestamp in nanoseconds
-    unix_from = time_from.timestamp() * 1e9
-    unix_to = time_to.timestamp() * 1e9
-
-    # Get the last TimeSyncInit record for this experiment
-    sync_init = TimeSyncInit.objects.filter(
-        dev_eui=dev_eui,
-        created_at__lte=time_to
-    ).order_by('-created_at').first()
-
-    # Fetch TimeCollection data
-    collections = TimeCollection.objects.filter(
-        dev_eui=dev_eui,
-        time_received__range=(unix_from, unix_to)
-    ).order_by('time_received')
+    dev_eui, time_from, time_to, unix_from, unix_to = get_time_range_params(request)
+    sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to)
 
     if collections and sync_init:
-
         filtered_data = [(c.time_expected - sync_init.first_uplink_expected, c.time_expected - c.time_received) 
                      for c in collections 
                      if (c.time_expected - c.time_received) > -1 * 1e9]
@@ -210,52 +112,23 @@ def time_difference_graph_v2(request):
         x_values = [(x[0]) / (60 * 1e9) for x in filtered_data]
         time_diffs = [x[1] / 1e9 for x in filtered_data]
 
-        plt.figure(figsize=(10, 6))
-        plt.plot(x_values, time_diffs, 'bo-')
-        plt.xlabel('Čas (minúty)')
-        plt.ylabel('Časový rozdiel T0-t0 (sekundy)')
-        plt.title(f'{time_from} - {time_to}')        
-        plt.grid(True)
-
-        # Save the plot to a buffer
-        buffer = io.BytesIO()
-        plt.savefig(buffer, format='png')
-        buffer.seek(0)
-        plt.close()
-
-        return HttpResponse(buffer.getvalue(), content_type='image/png')
+        plot_data = create_time_difference_plot(x_values, time_diffs, time_from, time_to)
+        return HttpResponse(plot_data, content_type='image/png')
     
     return HttpResponse("No data available", content_type='text/plain')
 
 
 @csrf_exempt
 def test_model(request):
-    dev_eui = request.GET.get('dev_eui', '')
-    time_from = request.GET.get('time_from', '')
-    time_to = request.GET.get('time_to', '')
+    dev_eui, time_from, time_to, unix_from, unix_to = get_time_range_params(request)
+    sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to)
 
-    #  Convert time strings to datetime objects
-    time_from = timezone.datetime.fromisoformat(time_from) if time_from else timezone.now() - timedelta(days=7)
-    time_to = timezone.datetime.fromisoformat(time_to) if time_to else timezone.now()
-
-    #  Convert datetime to Unix timestamp in nanoseconds
-    unix_from = time_from.timestamp() * 1e9
-    unix_to = time_to.timestamp() * 1e9
-
-    # Get the last TimeSyncInit record for this experiment
-    sync_init = TimeSyncInit.objects.filter(
-        dev_eui=dev_eui,
-        created_at__lte=time_to
-    ).order_by('-created_at').first()
-
-    # Fetch TimeCollection data
-    collections = TimeCollection.objects.filter(
-        dev_eui=dev_eui,
-        time_received__range=(unix_from, unix_to)
-    ).order_by('time_received')
+    if not collections or len(collections) == 0:
+        return HttpResponse(json.dumps({
+            'error': 'No data available for the specified time range'
+        }), status=404)
 
     first_received = collections[0].time_received
-
     model2 = createModel(collections, first_received)
 
     timeSync2 = {
@@ -273,73 +146,3 @@ def test_model(request):
 
 
 
-@csrf_exempt
-def time_difference_graph_synced(request):
-    dev_eui = request.GET.get('dev_eui', '')
-    time_from = request.GET.get('time_from', '')
-    time_to = request.GET.get('time_to', '')
-
-    #  Convert time strings to datetime objects
-    time_from = timezone.datetime.fromisoformat(time_from) if time_from else timezone.now() - timedelta(days=7)
-    time_to = timezone.datetime.fromisoformat(time_to) if time_to else timezone.now()
-
-    #  Convert datetime to Unix timestamp in nanoseconds
-    unix_from = time_from.timestamp() * 1e9
-    unix_to = time_to.timestamp() * 1e9
-
-    # Get the last TimeSyncInit record for this experiment
-    sync_init = TimeSyncInit.objects.filter(
-        dev_eui=dev_eui,
-        created_at__lte=time_to
-    ).order_by('-created_at').first()
-
-    # Fetch TimeCollection data
-    collections = TimeCollection.objects.filter(
-        dev_eui=dev_eui,
-        time_received__range=(unix_from, unix_to)
-    ).order_by('time_received')
-
-    ##############
-    first_received = collections[0].time_received
-    model = createModel(collections, first_received)
-    sync_response = {
-        'a': model.coef_[0],
-        'b': model.intercept_,
-        'P': sync_init.period * 1e9 * model.coef_[0],
-        'p_micro': int(sync_init.period * 1e9 * model.coef_[0] / 1e3),
-        'a_recreated': int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period / 1e6,
-        'pmicro2': (int(sync_init.period * 1e9 * (int(sync_init.period * 1e9 * model.coef_[0] / 1e3) / sync_init.period / 1e6) / 1e3) / sync_init.period / 1e6),
-    }
-
-    # def modify_received(received):
-    #     return received / sync_response['a_recreated']
-
-    def build_time_diffs(collections):
-        time_diffs = []
-        for c in collections:
-            periods_passed = round((c.time_received - first_received) / (sync_init.period * 1e9))
-            periods_diff = (periods_passed * sync_response.p_micro) - (periods_passed * sync_init.period * 1e6) * 1e9
-            time_diffs.append(c.time_expected - c.time_received)
-        return time_diffs
-
-    if collections and sync_init:
-        # x_values represents minutes now
-        x_values = [(c.time_expected - sync_init.first_uplink_expected) / (60 * 1e9) for c in collections]
-        time_diffs = [(c.time_expected - c.time_received) for c in collections]
-
-        plt.figure(figsize=(10, 6))
-        plt.plot(x_values, time_diffs, 'bo-')
-        plt.xlabel('Time (minutes)')
-        plt.ylabel('Time Difference (nanoseconds)')
-        plt.title(f'Time Difference for Device \'{dev_eui}\' from {time_from} to {time_to}')
-        plt.grid(True)
-
-        # Save the plot to a buffer
-        buffer = io.BytesIO()
-        plt.savefig(buffer, format='png')
-        buffer.seek(0)
-        plt.close()
-
-        return HttpResponse(buffer.getvalue(), content_type='image/png')
-    
-    return HttpResponse("No data available", content_type='text/plain')
