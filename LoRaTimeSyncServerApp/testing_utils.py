@@ -49,6 +49,6 @@ def get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_secon
     ).order_by('time_received')
 
     if error_greater_than_seconds is not None:
-        collections = [c for c in collections if (c.time_expected - c.time_received) > error_greater_than_seconds * 1e9]
+        collections = [c for c in collections if (c.time_expected - c.time_received) > (error_greater_than_seconds * 1e9)]
     
     return sync_init, collections
