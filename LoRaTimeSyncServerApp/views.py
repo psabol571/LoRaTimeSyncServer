@@ -149,13 +149,13 @@ def test_model(request):
     offset = accumulated_error + model.intercept_
 
     old_models_serialized = []
-    for model in existing_models:
+    for existing_model in existing_models:
         old_models_serialized.append({
-            'a': model.a,
-            'b': model.b,
-            'new_period_ns': model.new_period_ns,
-            'new_period_ms': model.new_period_ms,
-            'created_at': model.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'a': existing_model.a,
+            'b': existing_model.b,
+            'new_period_ns': existing_model.new_period_ns,
+            'new_period_ms': existing_model.new_period_ms,
+            'created_at': existing_model.created_at.strftime('%Y-%m-%d %H:%M:%S'),
         })
     
     new_model = {
