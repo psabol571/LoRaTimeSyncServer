@@ -133,7 +133,8 @@ def test_model(request):
     first_received = collections[0].time_received
     model = createModel(collections, first_received)
 
-    existing_model = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at, created_at__lte=time_to).last()
+    existing_models = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at, created_at__lte=time_to)
+    existing_model = existing_models.last()
 
     old_period_ns = existing_model.new_period_ns if existing_model else sync_init.period * 1e9
 
@@ -147,12 +148,15 @@ def test_model(request):
     accumulated_error = time_diff_ns * (model.coef_[0] - 1)
     offset = accumulated_error + model.intercept_
 
-    old_model = {
-        'a': existing_model.a,
-        'b': existing_model.b,
-        'new_period_ns': existing_model.new_period_ns,
-        'new_period_ms': existing_model.new_period_ms,
-    } if existing_model else None
+    old_models_serialized = []
+    for model in existing_models:
+        old_models_serialized.append({
+            'a': model.a,
+            'b': model.b,
+            'new_period_ns': model.new_period_ns,
+            'new_period_ms': model.new_period_ms,
+            'created_at': model.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        })
     
     new_model = {
         'a': model.coef_[0],
@@ -163,7 +167,7 @@ def test_model(request):
     }
 
     return HttpResponse(json.dumps({
-        'old_model': old_model,
+        'old_models': old_models_serialized,
         'new_model': new_model,
         'count': len(collections),
     }))
