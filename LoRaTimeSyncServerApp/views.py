@@ -130,18 +130,40 @@ def test_model(request):
         }), status=404)
 
     first_received = collections[0].time_received
-    model2 = createModel(collections, first_received)
+    model = createModel(collections, first_received)
 
-    timeSync2 = {
-        'a': model2.coef_[0],
-        'b': model2.intercept_,
-        'a-1': (model2.coef_[0] - 1) * sync_init.period,
-        'P': sync_init.period * 1e9 * model2.coef_[0],
-        'p_micro': int(sync_init.period * 1e9 * model2.coef_[0] / 1e3),
+    existing_model = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=time_from, created_at__lte=time_to).last()
+
+    old_period_ns = existing_model.new_period_ns if existing_model else sync_init.period * 1e9
+
+    new_period_ns = int(old_period_ns * model.coef_[0])
+    new_period_ms = int((new_period_ns + 500) / 1e3)
+    
+    # offset can be calculated as accumulated error over the period passed + model.b
+
+    # calculate accumulated error over the period passed
+    time_diff_ns = collections[len(collections) - 1].time_expected - collections[0].time_expected
+    accumulated_error = time_diff_ns * (model.coef_[0] - 1)
+    offset = accumulated_error + model.intercept_
+
+    old_model = {
+        'a': existing_model.a,
+        'b': existing_model.b,
+        'new_period_ns': existing_model.new_period_ns,
+        'new_period_ms': existing_model.new_period_ms,
+    }
+    
+    new_model = {
+        'a': model.coef_[0],
+        'b': model.intercept_,
+        'new_period_ns': new_period_ns,
+        'new_period_ms': new_period_ms,
+        'offset': offset,
     }
 
     return HttpResponse(json.dumps({
-        'model': timeSync2,
+        'old_model': old_model,
+        'new_model': new_model,
         'count': len(collections),
     }))
 
