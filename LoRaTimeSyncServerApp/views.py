@@ -5,7 +5,7 @@ from django.conf import settings
 from chirpstack_api import integration
 import matplotlib.pyplot as plt
 from django.core.handlers.wsgi import WSGIRequest
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from google.protobuf.json_format import Parse
@@ -166,11 +166,11 @@ def test_model(request):
         'offset': offset,
     }
 
-    return HttpResponse(json.dumps({
+    return JsonResponse({
         'old_models': old_models_serialized,
         'new_model': new_model,
         'count': len(collections),
-    }))
+    })
 
 
 
