@@ -30,7 +30,10 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
 
     # Save the plot to a buffer
     buffer = io.BytesIO()
-    plt.savefig(buffer, format='png', bbox_inches='tight', dpi=100)
+    if show_lines:
+        plt.savefig(buffer, format='png')
+    else:
+        plt.savefig(buffer, format='png', bbox_inches='tight', dpi=100)
     buffer.seek(0)
     plt.close()
     
