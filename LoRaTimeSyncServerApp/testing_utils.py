@@ -7,16 +7,29 @@ from scipy import stats
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit
 
 def create_time_difference_plot(x_values, time_diffs, time_from, time_to):
-    plt.figure(figsize=(10, 6))
-    plt.plot(x_values, time_diffs, 'bo-')
-    plt.xlabel('Čas (minúty)')
-    plt.ylabel('Časový rozdiel T0-t0 (sekundy)')
-    plt.title(f'{time_from} - {time_to}')        
+    # Calculate statistics
+    avg_error = sum(time_diffs) / len(time_diffs)
+    max_error = max(time_diffs)
+    min_error = min(time_diffs)
+    
+    # Calculate standard deviation
+    variance = sum((x - avg_error) ** 2 for x in time_diffs) / len(time_diffs)
+    std_dev = variance ** 0.5
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(x_values, time_diffs, 'b.')
     plt.grid(True)
+    plt.xlabel('Čas (minúty)')
+    plt.ylabel('Časový rozdiel Tn-tn (sekundy)')
+    
+    # Format the date range and statistics for the title
+    title = f"{time_from.strftime('%Y-%m-%d %H:%M:%S')} - {time_to.strftime('%Y-%m-%d %H:%M:%S')}\n"
+    title += f"Avg: {avg_error:.3f}s, Max: {max_error:.3f}s, Min: {min_error:.3f}s, StdDev: {std_dev:.3f}s"
+    plt.title(title)
 
     # Save the plot to a buffer
     buffer = io.BytesIO()
-    plt.savefig(buffer, format='png')
+    plt.savefig(buffer, format='png', bbox_inches='tight', dpi=100)
     buffer.seek(0)
     plt.close()
     
