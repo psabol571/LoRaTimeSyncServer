@@ -163,7 +163,7 @@ def test_model(request):
         'b': model.intercept_,
         'new_period_ns': new_period_ns,
         'new_period_ms': new_period_ms,
-        'offset': offset,
+        'offset_seconds': offset / 1e9,
     }
 
     return JsonResponse({
