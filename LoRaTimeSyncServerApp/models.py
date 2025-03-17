@@ -23,4 +23,5 @@ class TimeSyncModels(models.Model):
     new_period_ns=models.BigIntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_collection_time_received = models.BigIntegerField(null=True)
+    offset = models.BigIntegerField(null=True)
 
