@@ -174,4 +174,105 @@ def test_model(request):
     })
 
 
+@csrf_exempt
+def test_progressive_models(request):
+    dev_eui, time_from, time_to, unix_from, unix_to = get_time_range_params(request)
+    error_greater_than_seconds = request.GET.get('e', None)
+    remove_outliers = request.GET.get('o', False)
+    sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_seconds, remove_outliers)
+
+    if not collections or len(collections) == 0:
+        return HttpResponse(json.dumps({
+            'error': 'No data available for the specified time range'
+        }), status=404)
+
+    # Retrieve existing models for history/comparison
+    existing_models = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at, created_at__lte=time_to)
+    existing_model = existing_models.last()
+    old_period_ns = existing_model.new_period_ns if existing_model else sync_init.period * 1e9
+
+    # Get incremental models if enough data points exist
+    first_received = collections[0].time_received
+    total_collections = len(collections)
+    
+    # Create models with increasing number of collections
+    progressive_models = []
+    
+    # Calculate the number of models to create (default to 10 steps)
+    num_steps = min(10, total_collections // 10)  # At least 10 collections per model
+    
+    if num_steps > 0:
+        # Calculate the step size based on total collections
+        step_size = total_collections // num_steps
+        
+        for i in range(1, num_steps + 1):
+            # Use the first i*step_size collections to build this model
+            subset_size = i * step_size
+            subset_collections = collections[:subset_size]
+            
+            # Skip if too few collections
+            if len(subset_collections) < 10:
+                continue
+                
+            # Create a model for this subset
+            subset_model = createModel(subset_collections, first_received)
+            
+            # Calculate period and offset for this model
+            subset_period_ns = int(old_period_ns * subset_model.coef_[0])
+            subset_period_ms = int((subset_period_ns + 500) / 1e3)
+            
+            # Calculate the accumulated error for this subset
+            subset_time_diff_ns = subset_collections[-1].time_expected - subset_collections[0].time_expected
+            subset_accumulated_error = subset_time_diff_ns * (subset_model.coef_[0] - 1)
+            subset_offset = subset_accumulated_error + subset_model.intercept_
+            
+            # Add the model to the results
+            progressive_models.append({
+                'a': float(subset_model.coef_[0]),
+                'b': float(subset_model.intercept_),
+                'new_period_ns': subset_period_ns,
+                'new_period_ms': subset_period_ms,
+                'offset_seconds': subset_offset / 1e9,
+                'collections_used': len(subset_collections)
+            })
+    
+    # Create the comprehensive model using all collections
+    full_model = createModel(collections, first_received)
+    new_period_ns = int(old_period_ns * full_model.coef_[0])
+    new_period_ms = int((new_period_ns + 500) / 1e3)
+    
+    # Calculate accumulated error over the period passed
+    time_diff_ns = collections[-1].time_expected - collections[0].time_expected
+    accumulated_error = time_diff_ns * (full_model.coef_[0] - 1)
+    offset = accumulated_error + full_model.intercept_
+
+    # Prepare existing models for response
+    old_models_serialized = []
+    for existing_model in existing_models:
+        old_models_serialized.append({
+            'a': existing_model.a,
+            'b': existing_model.b,
+            'new_period_ns': existing_model.new_period_ns,
+            'new_period_ms': existing_model.new_period_ms,
+            'created_at': existing_model.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        })
+    
+    # Final model using all collections
+    new_model = {
+        'a': float(full_model.coef_[0]),
+        'b': float(full_model.intercept_),
+        'new_period_ns': new_period_ns,
+        'new_period_ms': new_period_ms,
+        'offset_seconds': offset / 1e9,
+        'collections_used': len(collections)
+    }
+
+    return JsonResponse({
+        'old_models': old_models_serialized,
+        'new_model': new_model,
+        'progressive_models': progressive_models,
+        'total_collections': total_collections,
+    })
+
+
 
