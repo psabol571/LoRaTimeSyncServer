@@ -148,6 +148,7 @@ def test_model(request):
             'new_period_ns': existing_model.new_period_ns,
             'new_period_ms': existing_model.new_period_ms,
             'created_at': existing_model.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'offset': existing_model.offset,
         })
     
     new_model = model
