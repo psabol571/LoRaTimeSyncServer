@@ -13,7 +13,7 @@ from datetime import timedelta
 # Create your views here.
 from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit, TimeSyncModels
-from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModel
+from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModel, createModelWithOffset
 from LoRaTimeSyncServerApp.testing_utils import create_time_difference_plot, get_time_range_params, get_sync_data
 
 import logging
@@ -132,22 +132,13 @@ def test_model(request):
         }), status=404)
 
     first_received = collections[0].time_received
-    model = createModel(collections, first_received)
 
     existing_models = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at, created_at__lte=time_to)
     existing_model = existing_models.last()
 
+
     old_period_ns = existing_model.new_period_ns if existing_model else sync_init.period * 1e9
-
-    new_period_ns = int(old_period_ns * model.coef_[0])
-    new_period_ms = int((new_period_ns + 500) / 1e3)
-    
-    # offset can be calculated as accumulated error over the period passed + model.b
-
-    # calculate accumulated error over the period passed
-    time_diff_ns = collections[len(collections) - 1].time_expected - collections[0].time_expected
-    accumulated_error = time_diff_ns * (model.coef_[0] - 1)
-    offset = accumulated_error + model.intercept_
+    model = createModelWithOffset(collections, dev_eui, old_period_ns)
 
     old_models_serialized = []
     for existing_model in existing_models:
@@ -159,13 +150,7 @@ def test_model(request):
             'created_at': existing_model.created_at.strftime('%Y-%m-%d %H:%M:%S'),
         })
     
-    new_model = {
-        'a': model.coef_[0],
-        'b': model.intercept_,
-        'new_period_ns': new_period_ns,
-        'new_period_ms': new_period_ms,
-        'offset_seconds': offset / 1e9,
-    }
+    new_model = model
 
     return JsonResponse({
         'old_models': old_models_serialized,
