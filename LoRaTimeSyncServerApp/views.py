@@ -148,10 +148,11 @@ def test_model(request):
             'new_period_ns': existing_model.new_period_ns,
             'new_period_ms': existing_model.new_period_ms,
             'created_at': existing_model.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'offset': existing_model.offset,
+            'offset': existing_model.offset / 1e9 if existing_model.offset else None,
         })
     
     new_model = model
+    new_model['offset'] = new_model['offset'] / 1e9
 
     return JsonResponse({
         'old_models': old_models_serialized,
