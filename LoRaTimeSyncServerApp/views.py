@@ -89,6 +89,11 @@ def time_difference_graph(request):
     remove_outliers = request.GET.get('o', False)
     show_lines = request.GET.get('l', False)
     lang = request.GET.get('lang', 'sk')
+    show_model = request.GET.get('m', False)
+
+    if show_model:
+        return test_model(request)
+
     sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_seconds, remove_outliers)
 
     if collections and sync_init:
