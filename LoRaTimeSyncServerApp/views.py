@@ -141,7 +141,7 @@ def test_model(request):
     if existing_model:
         collections = TimeCollection.objects.filter(
             dev_eui=existing_model.dev_eui,
-            time_received__gt=existing_model.last_collection_time_received, # after the last model creation
+            time_received__range=(existing_model.last_collection_time_received, unix_to)
         ).order_by('time_received')
 
         collections = filter_time_diff_outliers(collections)
