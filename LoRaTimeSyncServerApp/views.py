@@ -129,6 +129,7 @@ def test_model(request):
     dev_eui, time_from, time_to, unix_from, unix_to = get_time_range_params(request)
     error_greater_than_seconds = request.GET.get('e', None)
     remove_outliers = request.GET.get('o', False)
+    current_time_only = request.GET.get('c', False)
     sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_seconds, remove_outliers)
 
     if not collections or len(collections) == 0:
@@ -144,9 +145,10 @@ def test_model(request):
 
     # fetch only collections non outliers collections after last existing model
     if existing_model:
+        from_time =  unix_from if current_time_only else existing_model.last_collection_time_received
         collections = TimeCollection.objects.filter(
             dev_eui=existing_model.dev_eui,
-            time_received__range=(existing_model.last_collection_time_received, unix_to)
+            time_received__range=(from_time, unix_to)
         ).order_by('time_received')
 
         collections = filter_time_diff_outliers(collections)
