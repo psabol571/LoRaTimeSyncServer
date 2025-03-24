@@ -14,7 +14,7 @@ from datetime import timedelta
 from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit, TimeSyncModels
 from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModel, createModelWithOffset
-from LoRaTimeSyncServerApp.testing_utils import create_time_difference_plot, get_time_range_params, get_sync_data
+from LoRaTimeSyncServerApp.testing_utils import create_time_difference_plot, get_time_range_params, get_sync_data, filter_time_diff_outliers
 
 import logging
 logger = logging.getLogger('django')
@@ -136,6 +136,15 @@ def test_model(request):
     existing_models = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at, created_at__lte=time_to)
     existing_model = existing_models.last()
 
+
+    # fetch only collections non outliers collections after last existing model
+    if existing_model:
+        collections = TimeCollection.objects.filter(
+            dev_eui=existing_model.dev_eui,
+            time_received__gt=existing_model.last_collection_time_received, # after the last model creation
+        ).order_by('time_received')
+
+        collections = filter_time_diff_outliers(collections)
 
     old_period_ns = existing_model.new_period_ns if existing_model else sync_init.period * 1e9
     model = createModelWithOffset(collections, dev_eui, old_period_ns)
