@@ -6,7 +6,7 @@ import numpy as np
 from scipy import stats
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit
 
-def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_lines=False, lang='sk'):
+def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_lines=False, lang='sk', time_unit='m'):
     # Calculate statistics
     avg_error = sum(time_diffs) / len(time_diffs)
     max_error = max(time_diffs)
@@ -20,7 +20,13 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
     plt.figure(figsize=(12, 6))
     plt.plot(x_values, time_diffs, plot_style)
     plt.grid(True)
-    plt.xlabel('Čas (minúty)' if lang == 'sk' else 'Time (minutes)')
+
+    x_label_min = 'Čas (minúty)' if lang == 'sk' else 'Time (minutes)'
+    x_label_hour = 'Čas (hodiny)' if lang == 'sk' else 'Time (hours)'
+    x_label_day = 'Čas (dni)' if lang == 'sk' else 'Time (days)'
+    x_label = x_label_min if time_unit == 'm' else x_label_hour if time_unit == 'h' else x_label_day
+
+    plt.xlabel(x_label)
     plt.ylabel('Časový rozdiel Tn-tn (sekundy)' if lang == 'sk' else 'Time difference Tn-tn (seconds)')
     
     # Format the date range and statistics for the title
