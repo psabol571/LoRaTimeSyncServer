@@ -16,11 +16,11 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
     variance = sum((x - avg_error) ** 2 for x in time_diffs) / len(time_diffs)
     std_dev = variance ** 0.5
 
-    x = [x if time_unit == 'm' else x / 60 if time_unit == 'h' else x / (60 * 24) for x in x_values]
+    x_vals = [x if time_unit == 'm' else x / 60 if time_unit == 'h' else x / (60 * 24) for x in x_values]
 
     plot_style = 'bo-' if show_lines else 'b.'
     plt.figure(figsize=(12, 6))
-    plt.plot(x_values, time_diffs, plot_style)
+    plt.plot(x_vals, time_diffs, plot_style)
     plt.grid(True)
 
     x_label_min = 'Čas (minúty)' if lang == 'sk' else 'Time (minutes)'
