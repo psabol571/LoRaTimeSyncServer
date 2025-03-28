@@ -6,11 +6,14 @@ import numpy as np
 from scipy import stats
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit
 
-def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_lines=False, lang='sk', time_unit='m'):
+def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_lines=False, lang='sk', time_unit='m',err_limit=0.05):
     # Calculate statistics
     avg_error = sum(time_diffs) / len(time_diffs)
     max_error = max(time_diffs)
     min_error = min(time_diffs)
+
+    in_limit_count = sum(1 for x in time_diffs if abs(x) <= err_limit_ms)
+    in_limit_percentage = in_limit_count / len(time_diffs) * 100
     
     # Calculate standard deviation
     variance = sum((x - avg_error) ** 2 for x in time_diffs) / len(time_diffs)
@@ -34,6 +37,7 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
     # Format the date range and statistics for the title
     title = f"{time_from.strftime('%Y-%m-%d %H:%M:%S')} - {time_to.strftime('%Y-%m-%d %H:%M:%S')}\n"
     title += f"Avg: {avg_error:.3f}s, Max: {max_error:.3f}s, Min: {min_error:.3f}s, StdDev: {std_dev:.3f}s"
+    title += f"\nMessages with error in interval (-{err_limit}s,{err_limit}s): {in_limit_count}/{len(time_diffs)} ({in_limit_percentage:.2f}%)"
     plt.title(title)
 
     # Save the plot to a buffer
