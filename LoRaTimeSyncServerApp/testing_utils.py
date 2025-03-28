@@ -35,7 +35,7 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
     plt.ylabel('Časový rozdiel Tn-tn (sekundy)' if lang == 'sk' else 'Time difference Tn-tn (seconds)')
 
     messages_interval_title = "Spravy s chybou v intervale" if lang == 'sk' else "Messages with error in interval"
-    existing_models_title = "Existujúce modely (čas vytvorenia: perioda)" if lang == 'sk' else "Existing models (created at: period)"
+    existing_models_title = "Existujúce modely (čas vytvorenia - perioda)" if lang == 'sk' else "Existing models (created at - period)"
     
     # Format the date range and statistics for the title
     title = f"{time_from.strftime('%Y-%m-%d %H:%M:%S')} - {time_to.strftime('%Y-%m-%d %H:%M:%S')}\n"
@@ -46,7 +46,7 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
     if existing_models:
         model_info = []
         for model in existing_models:
-            model_info.append(f"({model.created_at.strftime('%Y-%m-%d %H:%M:%S')}: {model.new_period_ms} ms)")
+            model_info.append(f"({model.created_at.strftime('%Y-%m-%d %H:%M:%S')} - {model.new_period_ms} ms)")
         title += f"\n{existing_models_title}: {', '.join(model_info)}"
         
     

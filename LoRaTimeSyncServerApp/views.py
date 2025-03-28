@@ -92,6 +92,7 @@ def time_difference_graph(request):
     show_model = request.GET.get('m', False)
     time_unit = request.GET.get('u', 'm') # m minutes, h hours, d days
     err_limit = request.GET.get('ei', 0.05) ## error interval in seconds (-err_limit, err_limit)
+    include_existing_models = request.GET.get('im', False)
 
     if show_model:
         return test_model(request)
@@ -103,7 +104,9 @@ def time_difference_graph(request):
         x_values = [(c.time_expected - sync_init.first_uplink_expected) / (60 * 1e9) for c in collections]
         time_diffs = [(c.time_expected - c.time_received) / 1e9 for c in collections]
 
-        existing_models = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at, created_at__lte=time_to)
+        existing_models = None
+        if include_existing_models:
+            existing_models = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at, created_at__lte=time_to)
 
 
         plot_data = create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_lines, lang, time_unit, err_limit, existing_models)
