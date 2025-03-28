@@ -103,7 +103,10 @@ def time_difference_graph(request):
         x_values = [(c.time_expected - sync_init.first_uplink_expected) / (60 * 1e9) for c in collections]
         time_diffs = [(c.time_expected - c.time_received) / 1e9 for c in collections]
 
-        plot_data = create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_lines, lang, time_unit, err_limit)
+        existing_models = TimeSyncModels.objects.filter(dev_eui=dev_eui, created_at__gte=sync_init.created_at, created_at__lte=time_to)
+
+
+        plot_data = create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_lines, lang, time_unit, err_limit, existing_models)
         return HttpResponse(plot_data, content_type='image/png')
     
     return HttpResponse("No data available", content_type='text/plain')
@@ -165,6 +168,7 @@ def test_model(request):
             'b': existing_model.b,
             'new_period_ns': existing_model.new_period_ns,
             'new_period_ms': existing_model.new_period_ms,
+            'last_collection_time_received': existing_model.last_collection_time_received,
             'created_at': existing_model.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'offset': existing_model.offset / 1e9 if existing_model.offset else None,
         })
