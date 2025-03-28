@@ -33,6 +33,8 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
 
     plt.xlabel(x_label)
     plt.ylabel('Časový rozdiel Tn-tn (sekundy)' if lang == 'sk' else 'Time difference Tn-tn (seconds)')
+
+    messages_interval_title = "Spravy s chybou v intervale" if lang == 'sk' else "Messages with error in interval"
     
     # Format the date range and statistics for the title
     title = f"{time_from.strftime('%Y-%m-%d %H:%M:%S')} - {time_to.strftime('%Y-%m-%d %H:%M:%S')}\n"
