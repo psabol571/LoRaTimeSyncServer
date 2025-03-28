@@ -41,7 +41,6 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
     title = f"{time_from.strftime('%Y-%m-%d %H:%M:%S')} - {time_to.strftime('%Y-%m-%d %H:%M:%S')}\n"
     title += f"Avg: {avg_error:.3f}s, Max: {max_error:.3f}s, Min: {min_error:.3f}s, StdDev: {std_dev:.3f}s"
     title += f"\n{messages_interval_title} (-{err_limit}s,{err_limit}s): {in_limit_count}/{len(time_diffs)} ({in_limit_percentage:.2f}%)"
-    title += f"\n{existing_models_title}: "
     
     # Only display new_period_ms and created_at for each model
     if existing_models:
