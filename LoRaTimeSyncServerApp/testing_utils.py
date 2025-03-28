@@ -47,7 +47,7 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
         model_info = []
         title += f"\n{existing_models_title}: "
         for model in existing_models:
-            title += f"\n({model.created_at.strftime('%Y-%m-%d %H:%M:%S')} - {model.new_period_ms/1e6} s - {(model.offset/1e9 if model.offset else 0)} s)"
+            title += f"\n({model.created_at.strftime('%Y-%m-%d %H:%M:%S')} - {model.new_period_ms/1e6} s - {(model.offset/1e9 if model.offset else 'N/A')} s)"
         
     
     plt.title(title)
