@@ -45,9 +45,9 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
     # Only display new_period_ms and created_at for each model
     if existing_models:
         model_info = []
+        title += f"\n{existing_models_title}: "
         for model in existing_models:
-            model_info.append(f"({model.created_at.strftime('%Y-%m-%d %H:%M:%S')} - {model.new_period_ms} ms)")
-        title += f"\n{existing_models_title}: {' '.join(model_info)}"
+            title += f"\n({model.created_at.strftime('%Y-%m-%d %H:%M:%S')} - {model.new_period_ms} ms)"
         
     
     plt.title(title)
