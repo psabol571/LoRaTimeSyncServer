@@ -12,7 +12,7 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
     max_error = max(time_diffs)
     min_error = min(time_diffs)
 
-    in_limit_count = sum(1 for x in time_diffs if abs(x) <= err_limit_ms)
+    in_limit_count = sum(1 for x in time_diffs if abs(x) <= err_limit)
     in_limit_percentage = in_limit_count / len(time_diffs) * 100
     
     # Calculate standard deviation
