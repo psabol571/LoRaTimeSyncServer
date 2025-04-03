@@ -168,7 +168,7 @@ def existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL):
 
 def perform_sync(dev_eui):
     # adjust parameters as needed
-    MIN_N = 300
+    MIN_N = 150
     MIN_HOURS_FOR_NEW_MODEL = 24
 
     # Get the last TimeSyncInit record 
