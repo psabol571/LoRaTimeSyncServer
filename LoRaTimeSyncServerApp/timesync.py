@@ -155,7 +155,7 @@ def existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL):
     # first, create a model without saving it
     model = createModelWithOffset(collections, existing_model.dev_eui, existing_model.new_period_ms * 1e3)
 
-    treshold_offset_nanoseconds = 0.04 * 1e9 ## try to keep it in +- 40 miliseconds
+    treshold_offset_nanoseconds = 0.035 * 1e9 ## try to keep it in +- 35 miliseconds
 
     # if offset is in the precision threshold, do not save a new model, we dont need a resync yet
     if -treshold_offset_nanoseconds < model['offset'] < treshold_offset_nanoseconds:
