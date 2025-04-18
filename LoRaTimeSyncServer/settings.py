@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,17 +25,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-allsnf@!%d2)l5v^yx&pg08_&*bzyr^7l67&6s=s-^3m!y@!!q'
-CHIRPSTACK_HOST = '10.0.200.254:8001'
-CHIRPSTACK_API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjaGlycHN0YWNrIiwiaXNzIjoiY2hpcnBzdGFjayIsInN1YiI6IjFmZTk1ZmQwLTExMmEtNGIwMi1hZTAxLTYwOWFiZGY2ODZhYiIsInR5cCI6ImtleSJ9.ssQzuAUWvbHJTA4nqZXqUNvz7rPKV-NW3AuIFpOhiaw'
+SECRET_KEY = os.getenv('SECRET_KEY')
+CHIRPSTACK_HOST = os.getenv('CHIRPSTACK_HOST')
+CHIRPSTACK_API_KEY = os.getenv('CHIRPSTACK_API_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = [
-    '10.0.190.13',
-    'localhost',
-]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
 
 LOGGING = {
     'version': 1,
@@ -104,12 +106,11 @@ WSGI_APPLICATION = 'LoRaTimeSyncServer.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'loratimesync',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'db',
-        'PORT': 5432,
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 

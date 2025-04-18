@@ -10,19 +10,21 @@ services:
       - "8000:8000"
     depends_on:
       - db
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/loratimesync
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 
   db:
     image: postgres:13
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
     environment:
-      - POSTGRES_DB=loratimesync
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - HOST=10.0.190.13
-      - CHIRPSTACK_API_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjaGlycHN0YWNrIiwiaXNzIjoiY2hpcnBzdGFjayIsInN1YiI6IjFmZTk1ZmQwLTExMmEtNGIwMi1hZTAxLTYwOWFiZGY2ODZhYiIsInR5cCI6ImtleSJ9.ssQzuAUWvbHJTA4nqZXqUNvz7rPKV-NW3AuIFpOhiaw
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
       - "5432:5432"
 
