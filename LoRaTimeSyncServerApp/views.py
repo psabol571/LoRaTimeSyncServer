@@ -116,23 +116,6 @@ def time_difference_graph(request):
 
 
 @csrf_exempt
-def time_difference_graph_v2(request):
-    dev_eui, time_from, time_to, unix_from, unix_to = get_time_range_params(request)
-    error_greater_than_seconds = request.GET.get('e', -1)
-    remove_outliers = request.GET.get('o', False)
-    sync_init, collections = get_sync_data(dev_eui, time_to, unix_from, unix_to, error_greater_than_seconds, remove_outliers)
-
-    if collections and sync_init:
-        x_values = [(c.time_expected - sync_init.first_uplink_expected) / (60 * 1e9) for c in collections]
-        time_diffs = [(c.time_expected - c.time_received) / 1e9 for c in collections]
-
-        plot_data = create_time_difference_plot(x_values, time_diffs, time_from, time_to)
-        return HttpResponse(plot_data, content_type='image/png')
-    
-    return HttpResponse("No data available", content_type='text/plain')
-
-
-@csrf_exempt
 def test_model(request):
     dev_eui, time_from, time_to, unix_from, unix_to = get_time_range_params(request)
     error_greater_than_seconds = request.GET.get('e', None)

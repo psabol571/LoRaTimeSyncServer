@@ -21,7 +21,6 @@ from LoRaTimeSyncServerApp import views
 urlpatterns = [
     path('uplink', views.receive_uplink),
     path('graph-time-diff', views.time_difference_graph),
-    path('graph-time-diff_v2', views.time_difference_graph_v2),
     path('test_model', views.test_model),
     path('test_existing_model', views.test_existing_model),
     path('test_progressive_models', views.test_progressive_models),
