@@ -178,8 +178,76 @@ Funckia processWork je rozšírená o volanie funkcie initTimeSync, v prípade �
 
 \subsection{Synchronizačný server}
 
-Synchronizačný server je implementovaný v jazyku Python s využitím rámca Django a PostgreSQL databázy. V súbore \textbf{models.py} sú definované tri tabuľky: \textbf{TimeSyncInit}, \textbf{TimeCollection} a \textbf{TimeSyncModels}.
+Synchronizačný server je implementovaný v jazyku Python s využitím rámca Django a PostgreSQL databázy. 
 
+\subsubsection{Modely}
+
+V súbore \textbf{models.py} sú definované tri tabuľky: \textbf{TimeSyncInit} \ref{tab:tech:timesyncinit}, \textbf{TimeCollection} \ref{tab:tech:timecollection} a \textbf{TimeSyncModels} \ref{tab:tech:timesyncmodels}. Tabuľky nie sú prepojené cez cudzie kľúče, avšak všetky majú atribút \texttt{dev\_eui}, ktorý je unikátny pre každé zariadenie. 
+
+\begin{table}[H]
+    \centering
+    \caption{Prehľad atribútov tabuľky \texttt{TimeSyncInit}}
+    \begin{tabular}{|l|l|p{8cm}|}
+    \hline
+    \textbf{Názov} & \textbf{Typ} & \textbf{Popis} \\
+    \hline
+    \texttt{dev\_eui} & \texttt{CharField} & Unikátny identifikátor zariadenia (max. dĺžka 16 znakov). \\
+    \texttt{period} & \texttt{IntegerField} & Perióda vysielania zariadenia v sekunách. \\
+    \texttt{first\_uplink\_expected} & \texttt{BigIntegerField} & Očakávaný čas prvého uplinku (T1). \\
+    \texttt{created\_at} & \texttt{DateTimeField} & Čas vytvorenia záznamu (automaticky nastavený). \\
+    \hline
+    \label{tab:tech:timesyncinit}
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Prehľad atribútov tabuľky \texttt{TimeCollection}}
+    \begin{tabular}{|l|l|p{8cm}|}
+    \hline
+    \textbf{Názov} & \textbf{Typ} & \textbf{Popis} \\
+    \hline
+    \texttt{dev\_eui} & \texttt{CharField} & Unikátny identifikátor zariadenia (max. dĺžka 16 znakov). \\
+    \texttt{device\_time} & \texttt{BigIntegerField} & Lokálny čas zariadenia (nakoniec sme toto pole nevyužili). \\
+    \texttt{time\_expected} & \texttt{BigIntegerField} & Očakávaný čas prijatia správy na bráne v nanosekundách. \\
+    \texttt{time\_received} & \texttt{BigIntegerField} & Skutočný čas prijatia správy na bráne v nanosekundách. \\
+    \hline
+    \label{tab:tech:timecollection}
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Prehľad atribútov tabuľky \texttt{TimeSyncModels}}
+    \begin{tabular}{|l|l|p{8cm}|}
+    \hline
+    \textbf{Názov} & \textbf{Typ} & \textbf{Popis} \\
+    \hline
+    \texttt{dev\_eui} & \texttt{CharField} & Unikátny identifikátor zariadenia (max. dĺžka 16 znakov). \\
+    \texttt{a} & \texttt{FloatField} & Koeficient a lineárneho modelu. \\
+    \texttt{b} & \texttt{FloatField} & Koeficient b lineárneho modelu. \\
+    \texttt{new\_period\_ms} & \texttt{BigIntegerField} & Nová perióda v milisekundách. \\
+    \texttt{new\_period\_ns} & \texttt{BigIntegerField} & Nová perióda v nanosekundách. \\
+    \texttt{created\_at} & \texttt{DateTimeField} & Čas vytvorenia záznamu (automaticky nastavený). \\
+    \texttt{last\_collection\_time\_received} & \texttt{BigIntegerField} & Čas posledného použitého TimeSync záznamu (užitočné pre resynchronizáciu, aby sa staré záznamy nepoužívali pre vytváranie nových modelov). \\
+    \texttt{offset} & \texttt{BigIntegerField} & Akumulovaná chyba. \\
+    \hline
+    \end{tabular}
+    \label{tab:tech:timesyncmodels}
+\end{table}
+
+
+\subsubsection{Koncové body}
+
+Synchronizačný server má 5 koncových bodov:
+
+\begin{itemize}
+    \item \textbf{uplink} - efektívne realizuje celé riešenie synchronizácie času pomocou prijímania uplinkov a prípadneho zasielania downlinkov.
+    \item \textbf{graph-time-diff} -  slúži na vyhodnotenie riešenia pomocou zobrazenia grafu vývoja chyby synchronizácie času koncového zariadenia.
+    \item \textbf{test_model} - testuje vytvorenie nového modelu z vybraných časových dát (bez uloženia modelu do databázy)
+    \item \textbf{test_existing_model} - vráti posledný existujúci model pre dané zariadenie v danom čase
+    \item \textbf{test_progressive_models} - testuje inicializáciu synchronizácie pomocou zobrazujovania modelov, ktoré by vznikli z menšieho počtu nazbieraných časových dát.
+\end{itemize}
 
 
 
