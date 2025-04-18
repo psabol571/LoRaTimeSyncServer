@@ -1,0 +1,193 @@
+\chapter{Technická dokumentácia}
+Táto kapitola obsahuje programátorskú príručku, ktorá vysvetľuje ako spustiť program na koncovom zariadení obete, aj koncovom zariadení útočníka. Používateľská príručka obsahuje postup, ako vytvoriť potrebnú architektúru v rámci ChirpStack-u a ako sa dá jednoducho program útočníka (alebo program obete) upraviť pre rôzne scenáre útokov.
+
+\section{Programátorská príručka}
+
+V tejto časti opíšeme, ako nakonfigurovať a spustiť jednotlivé komponenty LoRaWAN siete.
+
+\subsection{Brána}
+
+Brána je realizovaná pomocou Raspberry Pi a LoRa koncentrátora IMST iC880A-SPI.
+
+\subsubsection{Zapojenie}
+
+TODO
+
+\subsubsection{Konfigurácia}
+
+Ako prvý krok potrebujeme stiahnuť a nainštalovať Raspberry Pi Imager (pomocou ktorého vieme nahrať Raspberry Pi OS na SD kartu). Ďalej potrebujeme stiahnuť Raspberry Pi OS. Najnovšia verzia Raspberry Pi OS mala v našom čase systémovú chybu a nebolo s ňou možné sfunkčniť bránu a preto sme použili staršiu verziu 2022-04-04 dostupnú na stiahnutie na nasledovnom linku: https://distrowatch.com/?newsid=11513. Následne vložíme SD kartu do čítačky, ktorú pomocou USB pripojíme k počítaču a pomocou programu Raspberry Pi Imager nahráme na SD kartu Raspberry Pi OS. 
+
+Do Raspberry Pi vložíme SD kartu s nainštalovaným OS a zapneme ho a pripojíme k monitoru. Ak sa zobrazí obrazovka s aktualizáciami operačného systému, musíme ich odmietnuť (pretože chceme staršiu verziu OS, na ktorej brána správne funguje). Následne otvoríme terminál, kde spustíme príkaz \textbf{sudo raspi-config}. V časti \textbf{Interface options} povolíme \textbf{SPI} a \textbf{SSH}. V časti \textbf{Localization} nastavíme správnu časovú zónu. V časti \textbf{Advanced options} povolíme \textbf{Expand Filesystems}. Následne reštartujeme Raspberry Pi.
+
+Teraz si nainštalujeme potrebné programy pomocou príkazu \textbf{sudo apt install git make cmake} (Nepoužívame príkazy apt update ani apt upgrade, pretože by sme si nahradili starú verziu OS). Pomocou príkazu \textbf{git clone https://github.com/psabol571/loragw} si stiahneme skripty potrebné pre inštaláciu brány. 
+
+Súbor \textbf{lorawan\_gateway\_install.sh} je zobrazený na Obr. \ref{fig:tech:lorawan-gateway-install}. V našom prípade sme mali používateľa \textbf{pi} a ChirpStack sieťový server mal IP adresu 193.87.2.13, inak je potrebné v skripte upraviť hodnotu \textbf{pi:pi} na meno používateľa a IP adresu, na ktorú ma brána preposielať uplink správy. Skript spustíme pomocou príkazu \textbf{sudo ./lorawan\_gateway\_install.sh}. Skript do súboru \textbf{/opt/packet\_forwarder/gatewayID.txt} vloží ID brány, ktoré bude potrebné nastaviť v ChirpStack-u.
+
+§§§
+
+# Installation od iC880a Driver
+sudo mkdir /opt/lora_gateway
+sudo chown -R pi:pi /opt/lora_gateway
+git clone https://github.com/Lora-net/lora_gateway.git /opt/lora_gateway
+cd /opt/lora_gateway
+sudo make
+
+# Installation of LoRa Semtech UDP Forwarder daemon
+sudo mkdir /opt/packet_forwarder
+sudo chown -R pi:pi /opt/packet_forwarder
+git clone https://github.com/Lora-net/packet_forwarder.git /opt/packet_forwarder
+
+ip link show eth0 | awk '/ether/ {print $2}' | awk -F ':' '{print $1$2$3"FFFE"$4$5$6}' | tr [:lower:] [:upper:] > /opt/packet_forwarder/gatewayID.txt
+cd /opt/packet_forwarder
+sudo make
+
+sed -i "s/AA555A0000000101/$(cat gatewayID.txt)/" lora_pkt_fwd/local_conf.json
+sed -i "s/localhost/193.87.2.13/" lora_pkt_fwd/global_conf.json
+sed -i "s/1680/8005/" lora_pkt_fwd/global_conf.json
+cd /opt/packet_forwarder/lora_pkt_fwd
+nohup ./lora_pkt_fwd < /dev/null 2> error.log > out.log &
+
+§§§
+
+
+Súbor \textbf{lora\_pkt\_fwd.service\_setup.sh} obsahuje príkazy, ktoré je potrebné spustiť pre vytvorenie a spustenie služby brány. Vytvoríme súbor \textbf{/etc/systemd/system/lora\_pkt\_fwd.service} a vložíme doň obsah:
+
+<<<
+[Unit]
+Description=LoRa Packet Forwarder daemon
+
+[Service]
+WorkingDirectory=/opt/packet_forwarder/lora_pkt_fwd
+ExecStartPre=/opt/lora_gateway/reset_lgw.sh start 25
+ExecStart=/opt/packet_forwarder/lora_pkt_fwd/lora_pkt_fwd
+SyslogIdentifier=lora_pkt_fwd
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+<<<
+
+Službu následne spustíme vykonaním príkazov:
+
+\\\
+sudo systemctl daemon-reload
+sudo systemctl enable lora_pkt_fwd.service
+sudo systemctl start lora_pkt_fwd.service
+\\\
+
+
+
+
+\subsection{ChirpStack - sieťový a aplikačný server}
+
+Ako sieťový server sme použili ChirpStack, ktorý je už nasadený na fakultnom serveri. Po prihlásení do aplikácie ChirpStack si v ľavom menu môžeme konfigurovať jednotlivé komponenty LoRaWAN siete.
+
+
+\subsubsection{Konfigurácia aplikačného servera}
+
+V ľavom  menu v časti Applications vieme vytvoriť aplikačný server. 
+V detaile aplikačného servera v časti Integrations vieme pridať HTTP integráciu, pomocou ktorej bude aplikačný server preposielať uplink správy na ľubovoľný koncový bod ľubovoľného serveru. (Obr. \ref{fig:tech:cs-http-integration})
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=\textwidth]{figures/TechDoku/CS-add-device-appkey.png}
+    \caption{Pridanie kľúča AppKey pre zariadenie}
+    \label{fig:tech:cs-device-appkey}
+\end{figure}
+
+V ľavom menu v časti API keys vieme vytvoriť nový API kľúč, pomocou ktorého bude náš synchronizačný server schopný odosielať downlink správy na zariadenie.
+
+
+\subsubsection{Konfigurácia brány}
+
+V ľavom menu v časti Gateways vieme vytvoriť novú bránu. Novej bráne priradíme GatewayID zhodné s tým, ktoré sme nakonfigurovali fyzicky na bráne v časti \ref{sec:tech:gateway-config} (v našom prípade dca632fffe6a02ec).
+
+\subsubsection{Konfigurácia koncového zariadenia}
+v časti Device Profile vieme vytvoriť nový profil zariadenia, kde vieme špecifikovať pásmo EU868 a verziu LoRaWAN 1.0.3.
+
+V detaile aplikačného servera je možné vytvoriť nové zariadenie. Zariadeniu priradíme profil zariadenia vytvorený v predošlom kroku a nastavíme, alebo vygenerujeme náhodné Device EUI (viď Obr. \ref{fig:tech:cs-device-create}). 
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=\textwidth]{figures/TechDoku/CD-dev-prof-create.png}
+    \caption{Formulár pre vytvorenie zariadenia}
+    \label{fig:tech:cs-device-create}
+\end{figure}
+
+Po vytvorení zariadenia sme presmerovaný do detailu zariadenia, kde je potrebné nastaviť alebo vygenerovať náhodný Application Key. Zhodné hodnoty Device EUI a Application Key budeme musieť nastaviť v programe koncového zariadenia v súbore \textbf{lorawan-keys.h}, aby zariadenie správne fungovalo.
+
+
+
+\subsection{Koncové zariadenie}
+
+Ako vývojové prostredie sme použili Visual Studio Code s rozšírením \textbf{PlatformIO IDE}. Rozšírenie umožňuje jednoducho nahrať ľubovoľný program do koncového zariadenia pomocou nástrojov v spodnej časti obrazovky (Obr. \ref{fig:tech:platformio_upload}). Pre nahranie programu do zariadenia je potrebné najprv pripojiť zariadenie cez USB k počítaču.
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=\textwidth]{figures/TechDoku/Platformio_upload.png}
+    \caption{Nahranie programu do zariadenia}
+    \label{fig:tech:platformio_upload}
+\end{figure}
+
+Program pre koncové zariadenie je dostupný na elektronickom médiu. V podadresári \textbf{keyfiles}
+je potrebné nastaviť hodnoty pre \textbf{OTAA\_DEVEUI} a \textbf{OTAA\_APPKEY} v súbore \textbf{lorawan-keys.h}, ktoré musia byť zhodné s hodnotami nastavenými v ChirpStack-u. Ak súbor \textbf{lorawan-keys.h} nie je prítomný, je možné ho vytvoriť premenovaním súboru \textbf{lorawan-keys\_example.h}.
+
+
+\subsection{Synchronizačný server}
+
+Synchronizačný server je dostupný na elektronickom médiu. Server je implementovaný v jazyku Python s využitím rámca Django a PostgreSQL databázy. Riešenie je kontajnerizované a je možné ho spustiť pomocou príkazu \textbf{docker-compose up}. Pri prvom spustení je potrebné vytvoriť migrácie databázy pomocou príkazu \textbf{docker-compose exec web python manage.py migrate}. V súbore \textbf{settings.py} sú nastavené hodnoty pre \textbf{CHIRPSTACK\_HOST} a \textbf{CHIRPSTACK\_API\_KEY}, aby bolo možné odosielanie downlink správ (Pre jednoduchosť sme hodnoty nastavili priamo v settings.py, avšak pre skutočné nasadenie by sme odporúčali nastavovať tieto hodnoty pomocou premenných prostredia v .env súbore).
+
+
+\section{Implementované funkcie}
+
+\subsection{Koncové zariadenie}
+
+Program obete sa nachádza v súbore \textbf{LMIC-node.cpp}. Implementovali sme triedu \textbf{TimeSync}, ktorá má nasledovné atribúty a metódy:
+
+\begin{table}[H]
+    \centering
+    \caption{Prehľad atribútov a metód triedy \texttt{TimeSync} v súbore \textbf{LMIC-node.cpp}}
+    \begin{tabular}{|l|l|p{8cm}|}
+    \hline
+    \textbf{Typ} & \textbf{Názov} & \textbf{Popis} \\
+    \hline
+    \multicolumn{3}{|c|}{\textbf{Atribúty}} \\
+    \hline
+    \texttt{bool} & \texttt{isInitialized} & Indikátor, či bola synchronizácia inicializovaná. \\
+    \texttt{ESP32Time} & \texttt{rtc} & RTC objekt pre prácu s časom na ESP32. \\
+    \texttt{uint64\_t} & \texttt{microsecondsTNext} & Plánovaný čas nasledujúceho vysielania. \\
+    \texttt{uint64\_t} & \texttt{doWorkIntervalMicroseconds} & Perióda vysielania v mikrosekundách. \\
+    \hline
+    \multicolumn{3}{|c|}{\textbf{Metódy}} \\
+    \hline
+    \texttt{std::vector<std::string>} & \texttt{dataToValues(uint8\_t* data, uint8\_t dataLength)} & Pomocná funkcia na parsovanie CSV formátu z downlink dát. \\
+    \texttt{lmic\_tx\_error\_t} & \texttt{initTimeSync()} & Inicializuje synchronizáciu času odoslaním JSON správy cez uplink. \\
+    \texttt{void} & \texttt{timeSyncDelay()} & Čaká na presný čas odoslania podľa synchronizácie (s využitím microsecondsTNext). \\
+    \texttt{void} & \texttt{processDownlinkTimeSync(...)} & Spracúva správy typu \texttt{i} (inicializácia) a \texttt{s} (synchronizácia) z downlinku. Inicializácia nastavuje atribúty isInitialized, microsecondsTNext a rtc. Synchronizácia upravuje atribút microsecondsTNext a prípadne aj atribút doWorkIntervalMicroseconds. \\
+    \texttt{void} & \texttt{reset()} & Resetuje stav synchronizácie a obnoví predvolenú periódu. \\
+    \hline
+    \end{tabular}
+\end{table}
+    
+
+Knižnica LMIC-node poskytuje implementáciu zariadenia, ktorá sa stará o vysielanie uplink správ pomocou funkcie \textbf{processWork}, plánovanie vysilania správy pomocou funkcie \textbf{doWorkCallback} a prijímanie downlink správ pomocou funkcie \textbf{processDownlink}.
+
+Funkcia doWorkCallback je implementovaná tak, že plánuje vyslanie uplink správy so sekundovou presnosťou. My sme v nej upravili 1 riadok kódu tak, aby bola schopná plánovať vyslanie správy s mikrosekundovou presnosťou.
+Funckia processWork je rozšírená o volanie funkcie initTimeSync, v prípade že premenná isInitialized ma hodnotu false. V opačnom prípade je funkcia processWork rozšírená o volanie funkcie timeSyncDelay pred tým ako sa vyšle uplink správa. Funkciu processDownlink sme rozšírili o volanie funkcie processDownlinkTimeSync.
+
+\subsection{Synchronizačný server}
+
+Synchronizačný server je implementovaný v jazyku Python s využitím rámca Django a PostgreSQL databázy. V súbore \textbf{models.py} sú definované tri tabuľky: \textbf{TimeSyncInit}, \textbf{TimeCollection} a \textbf{TimeSyncModels}.
+
+
+
+
+
+\section{Používateľská príručka}
+
+
+
+
+
+
