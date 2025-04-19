@@ -49,7 +49,7 @@ def saveTimeCollection(dev_eui, device_time, time_received):
 
 
 
-def createModel(collections, first_received):
+def createLinearRegressionModel(collections, first_received):
     # Prepare data for linear regression
     X = np.array([c.time_received - first_received for c in collections]).reshape(-1, 1)
     y = np.array([c.time_expected - first_received for c in collections])
@@ -61,8 +61,8 @@ def createModel(collections, first_received):
     return model
 
 
-def createModelWithOffset(collections, dev_eui, old_period_ns):
-    model = createModel(collections, collections[0].time_received)
+def createTimeSyncModel(collections, dev_eui, old_period_ns):
+    model = createLinearRegressionModel(collections, collections[0].time_received)
 
     new_period_ns = int(old_period_ns * model.coef_[0])
     new_period_ms = int((new_period_ns + 500) / 1e3)
@@ -87,7 +87,7 @@ def createModelWithOffset(collections, dev_eui, old_period_ns):
     }
     
 
-def saveModelWithOffset(model_data):
+def saveTimeSyncModel(model_data):
     return TimeSyncModels.objects.create(
         dev_eui=model_data['dev_eui'],
         a=model_data['a'],
@@ -125,8 +125,8 @@ def nonExistingModelSync(sync_init, MIN_N):
         return
 
     # remove first 2 unsynced outlier uplinks
-    model = createModelWithOffset(collections[2:], sync_init.dev_eui, sync_init.period * 1e9)
-    saveModelWithOffset(model)
+    model = createTimeSyncModel(collections[2:], sync_init.dev_eui, sync_init.period * 1e9)
+    saveTimeSyncModel(model)
 
     return f's,{model["offset"]},{model["new_period_ns"]}'
 
@@ -148,7 +148,7 @@ def existingModelSync(existing_model, MIN_HOURS_FOR_NEW_MODEL):
     logger.info(f"existingModelSync - collections lenght: {len(collections)}")
         
     # first, create a model without saving it
-    model = createModelWithOffset(collections, existing_model.dev_eui, existing_model.new_period_ms * 1e3)
+    model = createTimeSyncModel(collections, existing_model.dev_eui, existing_model.new_period_ms * 1e3)
 
     treshold_offset_nanoseconds = 0.035 * 1e9 ## try to keep it in +- 35 miliseconds
 
@@ -156,7 +156,7 @@ def existingModelSync(existing_model, MIN_HOURS_FOR_NEW_MODEL):
     if -treshold_offset_nanoseconds < model['offset'] < treshold_offset_nanoseconds:
         return
 
-    saveModelWithOffset(model)
+    saveTimeSyncModel(model)
 
     return f's,{model["offset"]},{model["new_period_ns"]}'
 

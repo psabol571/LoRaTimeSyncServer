@@ -13,7 +13,7 @@ from datetime import timedelta
 # Create your views here.
 from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit, TimeSyncModels
-from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, performSync, createModel, createModelWithOffset
+from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, performSync, createLinearRegressionModel, createTimeSyncModel
 from LoRaTimeSyncServerApp.testing_utils import create_time_difference_plot, get_time_range_params, get_sync_data, filter_time_diff_outliers
 
 import logging
@@ -145,7 +145,7 @@ def test_model(request):
         collections = filter_time_diff_outliers(collections)
 
     old_period_ns = existing_model.new_period_ns if existing_model else sync_init.period * 1e9
-    model = createModelWithOffset(collections, dev_eui, old_period_ns)
+    model = createTimeSyncModel(collections, dev_eui, old_period_ns)
 
     old_models_serialized = []
     for existing_model in existing_models:
@@ -210,7 +210,7 @@ def test_progressive_models(request):
                 continue
                 
             # Create a model for this subset
-            subset_model = createModel(subset_collections, first_received)
+            subset_model = createLinearRegressionModel(subset_collections, first_received)
             
             # Calculate period and offset for this model
             subset_period_ns = int(old_period_ns * subset_model.coef_[0])
@@ -232,7 +232,7 @@ def test_progressive_models(request):
             })
     
     # Create the comprehensive model using all collections
-    full_model = createModel(collections, first_received)
+    full_model = createLinearRegressionModel(collections, first_received)
     new_period_ns = int(old_period_ns * full_model.coef_[0])
     new_period_ms = int((new_period_ns + 500) / 1e3)
     
