@@ -249,6 +249,44 @@ Synchronizačný server má 5 koncových bodov:
     \item \textbf{test_progressive_models} - testuje inicializáciu synchronizácie pomocou zobrazujovania modelov, ktoré by vznikli z menšieho počtu nazbieraných časových dát.
 \end{itemize}
 
+Tieto koncové body sú definované v súbore \textbf{urls.py} a implementované v súbore \textbf{views.py}.
+
+
+\subsubsection{Mechanizmus časovej synchronizácie}
+
+Obr. \ref{fig:tech:timesync-receive-uplink} ukazuje funkciu \textbf{receive\_uplink} v súbore \textbf{views.py}. Funkcia realizuje prijímanie uplink správ, rozhodnutie či ide o inicializačnú správu alebo o bežnú správu, spracovanie správy a prípadné zasielanie downlink správy.
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=\textwidth]{figures/TechDoku/timesync-receive-uplink.png}
+    \caption{Funkcia \texttt{receive\_uplink} v súbore \textbf{views.py}}
+    \label{fig:tech:timesync-receive-uplink}
+\end{figure}
+
+Jadro riešenia sa nachádza v súbore \textbf{timesync.py}. 
+Proces synchronizácie začína inicializáciou pomocou funkcie \texttt{initTimeSync}. Táto funkcia vypočíta očakávaný čas prvého uplinku T1 a vytvorí záznam v tabuľke \texttt{TimeSyncInit}.
+
+Každý prijatý uplink po inicializácii je spracovaný funkciou \texttt{saveTimeCollection}, ktorá:
+\begin{enumerate}
+    \item Nájde posledný záznam inicializácie pre dané zariadenie
+    \item Vypočíta počet uplynulých periód od prvého očakávaného uplinku
+    \item Vypočíta očakávaný čas prijatia správy najbližší k reálnemu času prijatia správy
+    \item Uloží záznam do tabuľky \texttt{TimeCollection}
+\end{enumerate}
+Po uložení záznamu do tabuľky \texttt{TimeCollection} sa vyvolá funkcia \texttt{performSync}, ktorá:
+\begin{enumerate}
+    \item Nájde posledný záznam inicializácie pre dané zariadenie (\texttt{TimeSyncInit})
+    \item Nájde posledný existujúci model (\texttt{TimeSyncModels})
+    \item Definuje MIN\_N ako minimálny počet záznamov pre vytvorenie prvého modelu a MIN\_HOURS\_FOR\_NEW\_MODEL ako minimálny čas, kedy je možné vytvoriť nový model od vytvorenia posledného modelu
+    \item Volá príslušnú funkciu synchronizácie podľa existencie modelu (\texttt{nonExistingModelSync} alebo \texttt{existingModelSync})
+\end{enumerate}
+
+Funkcia \texttt{nonExistingModelSync} získa záznamy z tabuľky \texttt{TimeCollection} a vytvára a ukladá model (pomocou funkcií \texttt{createTimeSyncModel} a \texttt{saveTimeSyncModel}) iba ak je počet záznamov väčší alebo rovný MIN\_N. Okrem toho táto funkcia rieši vylepšenú inicializáciu synchronizácie, ktorá po 2 prijatých správach vracia dáta pre downlink správu s aktuálnou chybou času zariadenia.
+
+Funkcia \texttt{existingModelSync} najprv skontroluje čas od posledného vytvorenia modelu a ak uplynul dostatočne veľa času (MIN\_HOURS\_FOR\_NEW\_MODEL), potom získa nové záznamy získa záznamy z tabuľky \texttt{TimeCollection} od poslednej synchronizácie, odstráni vychýlené záznamy na základe medzikvartilového rozpätia a vytvorí nový model pomocou funkcie \texttt{createTimeSyncModel}. Následne skontroluje či je nový model významný (akumulovaná chyba presahuje prahovú hodnotu ±35 ms) a ak áno, tak ho uloží do tabuľky \texttt{TimeSyncModels} a vráti dáta pre synchronizačnú downlink správu.
+
+Funkcia \texttt{createTimeSyncModel} využije funkciu \texttt{createLinearRegressionModel} na vytvorenie modelu lineárnej regresie a následne rozšíri model o všetky potrebné artibúty objektu \texttt{TimeSyncModels}.
+
 
 
 
