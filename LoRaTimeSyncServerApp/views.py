@@ -13,7 +13,7 @@ from datetime import timedelta
 # Create your views here.
 from LoRaTimeSyncServerApp.ChirpStackUtils.downlink import send_downlink
 from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit, TimeSyncModels
-from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, perform_sync, createModel, createModelWithOffset
+from LoRaTimeSyncServerApp.timesync import initTimeSync, saveTimeCollection, performSync, createModel, createModelWithOffset
 from LoRaTimeSyncServerApp.testing_utils import create_time_difference_plot, get_time_range_params, get_sync_data, filter_time_diff_outliers
 
 import logging
@@ -53,7 +53,7 @@ def receive_uplink(request):
             send_downlink(dev_eui, downlink_data)
         else:
             saveTimeCollection(dev_eui, now, time_received)
-            downlink_data = perform_sync(dev_eui)
+            downlink_data = performSync(dev_eui)
             
             # if model is created, send synchronization downlink
             if downlink_data is not None:

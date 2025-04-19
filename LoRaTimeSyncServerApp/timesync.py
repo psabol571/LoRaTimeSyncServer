@@ -166,7 +166,7 @@ def existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL):
     return f's,{model["offset"]},{model["new_period_ns"]}'
 
 
-def perform_sync(dev_eui):
+def performSync(dev_eui):
     # adjust parameters as needed
     MIN_N = 150
     MIN_HOURS_FOR_NEW_MODEL = 24
