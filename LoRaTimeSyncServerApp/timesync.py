@@ -131,7 +131,7 @@ def nonExistingModelSync(sync_init, MIN_N):
     return f's,{model["offset"]},{model["new_period_ns"]}'
 
 
-def existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL):
+def existingModelSync(existing_model, MIN_HOURS_FOR_NEW_MODEL):
     # Check if MIN_HOURS_FOR_NEW_MODEL hours have passed since last model creation
     time_since_last_model = timezone.now() - existing_model.created_at
     if time_since_last_model < timedelta(hours=MIN_HOURS_FOR_NEW_MODEL):
@@ -182,7 +182,7 @@ def performSync(dev_eui):
     if existing_model is None:
         return nonExistingModelSync(sync_init, MIN_N)
     else:
-        return existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL)
+        return existingModelSync(existing_model, MIN_HOURS_FOR_NEW_MODEL)
 
 
 
