@@ -99,14 +99,6 @@ def saveModelWithOffset(model_data):
     )
 
 
-def createModelFromCollections(collections, dev_eui, old_period_ns):
-    # create linear regression model
-    model = createModelWithOffset(collections, dev_eui, old_period_ns)
-
-    saveModelWithOffset(model)
-
-    return f's,{model["offset"]},{model["new_period_ns"]}'
-
 
 def syncAfterFirstUplink(collections):
     # Calculate the offset for the first uplink
@@ -133,7 +125,10 @@ def nonExistingModelSync(sync_init, MIN_N):
         return
 
     # remove first 2 unsynced outlier uplinks
-    return createModelFromCollections(collections[2:], sync_init.dev_eui, sync_init.period * 1e9)
+    model = createModelWithOffset(collections[2:], sync_init.dev_eui, sync_init.period * 1e9)
+    saveModelWithOffset(model)
+
+    return f's,{model["offset"]},{model["new_period_ns"]}'
 
 
 def existingModelSync(existing_model, MIN_N, MIN_HOURS_FOR_NEW_MODEL):
