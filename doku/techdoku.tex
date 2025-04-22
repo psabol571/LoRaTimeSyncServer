@@ -292,6 +292,90 @@ Funkcia \texttt{createTimeSyncModel} využije funkciu \texttt{createLinearRegres
 
 \section{Používateľská príručka}
 
+Pre účely testovania a vyhodnocovania riešenia sme vytvorili viaceré koncové body, ktorých použitie bližšie opíšeme v tejto časti.
+
+\subsection{Koncový bod GET /graph-time-diff}
+
+Koncový bod slúži na zobrazenie grafu vývoja chyby synchronizácie času koncového zariadenia.
+Graf je možné zobraziť viacerými spôsobmi, ktoré sú určené parametrami:
+
+\begin{itemize}
+    \item \texttt{dev\_eui} - Unikátny identifikátor zariadenia
+    \item \texttt{time\_from} - Časový údaj v iso časovom formáte reprezentujúci od kedy sa má zobraziť graf 
+    \item \texttt{time\_to} - Časový údaj v iso časovom formáte reprezentujúci do kedy sa má zobraziť graf
+    \item \texttt{e} - Číslo, ktoré určuje minimálnu chybu v sekundách, ktorá sa má zobraziť na grafe (vhodné pre filtrovanie vychýlených hodnôt na základe definovanej hodnoty)
+    \item \texttt{o} - Logická hodnota (true alebo false), ktorá určuje či sa majú odstrániť vychýlené hodnoty z dát pomocou metódy medzikvartilového rozpätia
+    \item \texttt{l} - Logická hodnota (true alebo false), ktorá určuje či sa majú zobraziť na grafe čiary medzi hodnotami (vhodné pre lepší detail zobrazenia postupnosti hodnôt)
+    \item \texttt{m} - Logická hodnota (true alebo false). Ak je nastavená, slúži ako preťaženie na zavolanie koncového bodu test_model namiesto zobrazenia grafu (vhodné pri testovaní, ak si chceme rýchlo zobraziť modely k danému grafu dát).
+    \item \texttt{u} - Jednotka času (m, h, d), ktorá určuje, či sa na osi x zobrazí čas v minútach, hodinách alebo dňoch
+    \item \texttt{ei} - Číslo väčšie ako 0, ktoré určuje interval chyby v sekundách a vyhodnocuje, kolľko záznamov sa nachádza v tomto intervale (využité pre určenie percentuálnej úspešnosti synchronizácie času v rámci danej presnosti)
+    \item \texttt{im} - Logická hodnota (true alebo false), ktorá určuje či sa majú s grafom zobraziť aj existujúce modely v rámci daného časového intervalu
+    \item \texttt{lang} - Jazyk (sk alebo en), ktorý určuje jazyk grafu (vhodné pre zobrazovanie grafu v anglickom jazyku pre použitie do vedeckých článkov)
+\end{itemize}
+
+Príklad volania pre zobrazenie grafu s odfiltrovanými hodnotami menšími ako -0.4 sekundy a zobrazením modelov a vyhodnotením percentuálnej úspešnosti synchronizácie času v rámci danej presnosti (-0.05 , 0.05) sekundy:
+
+\begin{verbatim}
+    http://10.0.190.13:8000/graph-time-diff?time_from=2025-03-08T15:00:00&time_to=2025-04-03T19:50:00&dev_eui=771ba59686e44f07&%20&e=-0.4&u=d&ei=0.05&im=true
+\end{verbatim}
+
+
+
+\subsection{Koncový bod GET /test_model}
+
+Koncový bod slúži na testovanie vytvárania nových modelov. Koncový bod má nasledovné parametre:
+
+\begin{itemize}
+    \item \texttt{dev\_eui} - Unikátny identifikátor zariadenia
+    \item \texttt{time\_from} - Časový údaj v iso časovom formáte reprezentujúci od kedy sa má zobraziť graf 
+    \item \texttt{time\_to} - Časový údaj v iso časovom formáte reprezentujúci do kedy sa má zobraziť graf
+    \item \texttt{e} - Číslo, ktoré určuje minimálnu chybu v sekundách, ktorá sa má zobraziť na grafe (vhodné pre filtrovanie vychýlených hodnôt na základe definovanej hodnoty)
+    \item \texttt{o} - Logická hodnota (true alebo false), ktorá určuje či sa majú odstrániť vychýlené hodnoty z dát pomocou metódy medzikvartilového rozpätia
+    \item \texttt{c} - Logická hodnota (true alebo false). Ak je nastavená, tak sa model vytvorí len z dát, ktoré sú v rámci časového intervalu time\_from a time\_to. Ak nie je nastavená, model sa vytvára zo všetkých dát nazbieraných od vytvorenia posledného modelu (rovnako ako funguje mechanizmus časovej synchronizácie). 
+\end{itemize}
+
+Výstupom koncového bodu je JSON objekt s nasledovnými atribútmi:
+
+\begin{itemize}
+    \item \texttt{old\_models} - Pole objektov, ktoré reprezentujú existujúce modely v rámci daného časového intervalu
+    \item \texttt{new\_model} - Objekt, ktorý reprezentuje nový model
+    \item \texttt{count} - Počet záznamov z koľkých bol nový model vytvorený
+\end{itemize}
+
+
+\subsection{Koncový bod GET /test_progressive_models}
+
+Koncový bod slúži na testovanie inicializácie synchronizácie pomocou zobrazujovania modelov, ktoré by vznikli z menšieho počtu nazbieraných časových dát. Koncový bod má nasledovné parametre:
+
+\begin{itemize}
+    \item \texttt{dev\_eui} - Unikátny identifikátor zariadenia
+    \item \texttt{time\_from} - Časový údaj v iso časovom formáte reprezentujúci od kedy sa má zobraziť graf 
+    \item \texttt{time\_to} - Časový údaj v iso časovom formáte reprezentujúci do kedy sa má zobraziť graf
+    \item \texttt{e} - Číslo, ktoré určuje minimálnu chybu v sekundách, ktorá sa má zobraziť na grafe (vhodné pre filtrovanie vychýlených hodnôt na základe definovanej hodnoty)
+    \item \texttt{o} - Logická hodnota (true alebo false), ktorá určuje či sa majú odstrániť vychýlené hodnoty z dát pomocou metódy medzikvartilového rozpätia
+\end{itemize}
+
+Výstupom koncového bodu je JSON objekt s nasledovnými atribútmi:
+
+\begin{itemize}
+    \item \texttt{old\_models} - Pole objektov, ktoré reprezentujú existujúce modely v rámci daného časového intervalu
+    \item \texttt{new\_model} - Objekt, ktorý reprezentuje nový model vytvorený z plného počtu nazbieraných časových dát
+    \item \texttt{progressive\_models} - Pole objektov, ktoré reprezentujú postupné modely vytvorené z menšieho počtu nazbieraných časových dát
+    \item \texttt{total\_collections} - Počet záznamov v rámci daného časového intervalu
+\end{itemize}
+
+
+\subsection{Koncový bod GET /test_existing_model}
+
+Koncový bod vráti posledný existujúci model pre dané zariadenie v danom čase. Koncový bod má nasledovné parametre:
+
+
+\begin{itemize}
+    \item \texttt{dev\_eui} - Unikátny identifikátor zariadenia
+    \item \texttt{time\_from} - Časový údaj v iso časovom formáte reprezentujúci od kedy sa má zobraziť graf 
+    \item \texttt{time\_to} - Časový údaj v iso časovom formáte reprezentujúci do kedy sa má zobraziť graf
+\end{itemize}
+
 
 
 
