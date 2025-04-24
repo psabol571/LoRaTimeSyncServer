@@ -27,6 +27,28 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
     plt.plot(x_vals, time_diffs, plot_style)
     plt.grid(True)
 
+    # Draw vertical lines for each model if existing_models is provided
+    if existing_models:
+        # Calculate the conversion factor based on time unit
+        time_unit_factor = 1 if time_unit == 'm' else 60 if time_unit == 'h' else 60 * 24
+        
+        # Calculate each model's position on the X axis
+        for i, model in enumerate(existing_models, 1):
+            # Calculate minutes between time_from and model.created_at
+            time_diff_minutes = (model.created_at - time_from).total_seconds() / 60
+            
+            # Convert to the appropriate time unit
+            x_pos = time_diff_minutes / time_unit_factor
+            
+            # Draw a vertical line at this position
+            plt.axvline(x=x_pos, color='green', linestyle='--', alpha=0.7)
+            
+            # Add a text label with the model number
+            y_lim = plt.ylim()
+            text_y = y_lim[1] - (y_lim[1] - y_lim[0]) * 0.05  # Position text near the top
+            plt.text(x_pos, text_y, str(i), color='green', fontweight='bold', 
+                     ha='center', va='top', bbox=dict(facecolor='white', alpha=0.7))
+
     x_label_min = 'Čas (minúty)' if lang == 'sk' else 'Time (minutes)'
     x_label_hour = 'Čas (hodiny)' if lang == 'sk' else 'Time (hours)'
     x_label_day = 'Čas (dni)' if lang == 'sk' else 'Time (days)'
@@ -48,9 +70,8 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
     if existing_models:
         model_info = []
         title += f"\n{existing_models_title}: "
-        for model in existing_models:
-            title += f"\n({model.created_at.strftime('%Y-%m-%d %H:%M:%S')} - {model.new_period_ms/1e6} s - {(model.offset/1e9 if model.offset else 'N/A')} s)"
-        
+        for i, model in enumerate(existing_models, 1):
+            title += f"\n{i}. ({model.created_at.strftime('%Y-%m-%d %H:%M:%S')} - {model.new_period_ms/1e6} s - {(model.offset/1e9 if model.offset else 'N/A')} s)"
     
     plt.title(title)
 
