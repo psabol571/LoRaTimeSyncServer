@@ -32,10 +32,22 @@ def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_l
         # Calculate the conversion factor based on time unit
         time_unit_factor = 1 if time_unit == 'm' else 60 if time_unit == 'h' else 60 * 24
         
+        # Ensure time_from is timezone aware
+        if timezone.is_naive(time_from):
+            time_from_aware = timezone.make_aware(time_from)
+        else:
+            time_from_aware = time_from
+        
         # Calculate each model's position on the X axis
         for i, model in enumerate(existing_models, 1):
+            # Ensure model created_at is timezone aware
+            if timezone.is_naive(model.created_at):
+                model_created_at = timezone.make_aware(model.created_at)
+            else:
+                model_created_at = model.created_at
+            
             # Calculate minutes between time_from and model.created_at
-            time_diff_minutes = (model.created_at - time_from).total_seconds() / 60
+            time_diff_minutes = (model_created_at - time_from_aware).total_seconds() / 60
             
             # Convert to the appropriate time unit
             x_pos = time_diff_minutes / time_unit_factor
