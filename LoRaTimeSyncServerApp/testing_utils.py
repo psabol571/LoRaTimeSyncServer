@@ -8,7 +8,7 @@ from LoRaTimeSyncServerApp.models import TimeCollection, TimeSyncInit
 
 def create_time_difference_plot(x_values, time_diffs, time_from, time_to, show_lines=False, lang='sk', time_unit='m',err_limit=None, existing_models=None):
     # Calculate statistics
-    avg_error = sum(time_diffs) / len(time_diffs)
+    avg_error = sum(abs(x) for x in time_diffs) / len(time_diffs)
     max_error = max(time_diffs)
     min_error = min(time_diffs)
 
